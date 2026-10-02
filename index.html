@@ -169,8 +169,6 @@ fieldset.rel legend{font-weight:600;font-size:13px;color:var(--mut);padding:0 6p
 <h2 id="ctitle">Novo cadastro</h2>
 <form id="cf" class="grid" autocomplete="off">
 <label>Nome completo<input id="cn" required></label>
-<label>CPF<input id="cc" inputmode="numeric" maxlength="14" placeholder="000.000.000-00" required></label>
-<label>E-mail<input id="ce" type="email" required></label>
 <label>SISPAT<input id="cs" required></label>
 <label>Empresa cadastrada (apenas uma)<select id="cad"></select></label>
 <fieldset class="full rel"><legend>Empresas associadas e em processo de cadastro ou associação</legend><div class="grid" id="rel"></div></fieldset>
@@ -180,12 +178,12 @@ fieldset.rel legend{font-weight:600;font-size:13px;color:var(--mut);padding:0 6p
 <div class="panel">
 <h2>Colaboradores cadastrados</h2>
 <div class="filters">
-<input id="cq" type="search" placeholder="Pesquisar nome, CPF ou SISPAT" aria-label="Pesquisar colaborador">
+<input id="cq" type="search" placeholder="Pesquisar nome ou SISPAT" aria-label="Pesquisar colaborador">
 <select id="cfe" aria-label="Filtrar por empresa"></select>
 <select id="cfs" aria-label="Filtrar por situação"></select>
 </div>
-<div class="tw"><table style="min-width:700px">
-<thead><tr><th>Colaborador</th><th>CPF</th><th>E-mail</th><th>SISPAT</th><th>Empresa cadastrada</th><th>Ações</th></tr></thead>
+<div class="tw"><table style="min-width:520px">
+<thead><tr><th>Colaborador</th><th>SISPAT</th><th>Empresa cadastrada</th><th>Ações</th></tr></thead>
 <tbody id="cb"></tbody></table></div>
 </div>
 <div class="ov" id="fv" hidden><div class="md" role="dialog" aria-modal="true" aria-labelledby="fn"><div class="mh"><h2 id="fn"></h2><button class="btn" id="fx" type="button">Fechar</button></div><div id="fb" class="ficha"></div><div class="row" style="margin-top:0"><button class="btn p" id="fe" type="button">Editar cadastro</button></div></div></div>
@@ -310,9 +308,6 @@ const CK="cadastros-iem-cmt-v1";
 let C=[],cEdit=null,armId=null,fid=null;
 const saveC=()=>{try{localStorage.setItem(CK,JSON.stringify(C))}catch(e){}};
 const loadC=()=>{try{const r=localStorage.getItem(CK);if(r)C=JSON.parse(r)}catch(e){}};
-const digits=s=>s.replace(/\D/g,"");
-const fmtCpf=s=>digits(s).slice(0,11).replace(/(\d{3})(\d)/,"$1.$2").replace(/(\d{3})(\d)/,"$1.$2").replace(/(\d{3})(\d{1,2})$/,"$1-$2");
-function cpfOk(c){c=digits(c);if(c.length!==11||/^(\d)\1+$/.test(c))return false;for(const n of[9,10]){let t=0;for(let i=0;i<n;i++)t+=c[i]*(n+1-i);if((t*10)%11%10!=c[n])return false}return true}
 const relsOf=r=>[...(r.cad?[{emp:r.cad,st:"cad"}]:[]),...Object.entries(r.rel||{}).map(([emp,st])=>({emp,st}))];
 const chip=x=>`<span class="chip k-${x.st}">${esc(x.emp)}</span>`;
 $("cad").innerHTML='<option value="">Nenhuma</option>'+EMP.map(e=>`<option>${e}</option>`).join("");
@@ -322,28 +317,26 @@ $("cfs").innerHTML='<option value="">Todas as situações</option>'+Object.entri
 function syncRel(){const c=$("cad").value;document.querySelectorAll("#rel select").forEach(s=>{const off=c!==""&&s.dataset.emp===c;if(off)s.value="";s.disabled=off;s.title=off?"Esta é a empresa cadastrada":""})}
 function clearC(){cEdit=null;$("cf").reset();syncRel();$("cmsg").textContent="";$("ctitle").textContent="Novo cadastro"}
 function renderC(){
-  const q=$("cq").value.trim().toLowerCase(),qd=digits(q),fe=$("cfe").value,fs=$("cfs").value;
-  const rows=C.filter(r=>(!q||r.nome.toLowerCase().includes(q)||(qd&&digits(r.cpf).includes(qd))||r.sispat.toLowerCase().includes(q))&&((!fe&&!fs)||relsOf(r).some(x=>(!fe||x.emp===fe)&&(!fs||x.st===fs)))).sort((a,b)=>a.nome.localeCompare(b.nome));
-  $("cb").innerHTML=rows.length?rows.map(r=>`<tr><td><button class="link" data-f="${r.id}">${esc(r.nome)}</button></td><td>${esc(r.cpf)}</td><td>${esc(r.email)}</td><td>${esc(r.sispat)}</td><td>${r.cad?`<span class="chip k-cad">${esc(r.cad)}</span>`:"—"}</td><td style="white-space:nowrap"><button class="btn sm" data-ce="${r.id}">Editar</button> <button class="btn sm d" data-cx="${r.id}">${armId==r.id?"Confirmar exclusão":"Excluir"}</button></td></tr>`).join(""):empty(6,C.length?"Nenhum colaborador encontrado com esses filtros.":"Nenhum colaborador cadastrado. Preencha o formulário acima.");
+  const q=$("cq").value.trim().toLowerCase(),fe=$("cfe").value,fs=$("cfs").value;
+  const rows=C.filter(r=>(!q||r.nome.toLowerCase().includes(q)||r.sispat.toLowerCase().includes(q))&&((!fe&&!fs)||relsOf(r).some(x=>(!fe||x.emp===fe)&&(!fs||x.st===fs)))).sort((a,b)=>a.nome.localeCompare(b.nome));
+  $("cb").innerHTML=rows.length?rows.map(r=>`<tr><td><button class="link" data-f="${r.id}">${esc(r.nome)}</button></td><td>${esc(r.sispat)}</td><td>${r.cad?`<span class="chip k-cad">${esc(r.cad)}</span>`:"—"}</td><td style="white-space:nowrap"><button class="btn sm" data-ce="${r.id}">Editar</button> <button class="btn sm d" data-cx="${r.id}">${armId==r.id?"Confirmar exclusão":"Excluir"}</button></td></tr>`).join(""):empty(4,C.length?"Nenhum colaborador encontrado com esses filtros.":"Nenhum colaborador cadastrado. Preencha o formulário acima.");
 }
 function ficha(id){const r=C.find(x=>x.id==id);if(!r)return;fid=r.id;$("fn").textContent=r.nome;
   const g=st=>relsOf(r).filter(x=>x.st===st).map(chip).join("")||"—";
-  $("fb").innerHTML=`<dl><dt>CPF</dt><dd>${esc(r.cpf)}</dd><dt>E-mail</dt><dd>${esc(r.email)}</dd><dt>SISPAT</dt><dd>${esc(r.sispat)}</dd><dt>Cadastrado em</dt><dd>${g("cad")}</dd><dt>Associado em</dt><dd>${g("assoc")}</dd><dt>Em processo de cadastro</dt><dd>${g("pcad")}</dd><dt>Em processo de associação</dt><dd>${g("passoc")}</dd></dl>`;
+  $("fb").innerHTML=`<dl><dt>SISPAT</dt><dd>${esc(r.sispat)}</dd><dt>Cadastrado em</dt><dd>${g("cad")}</dd><dt>Associado em</dt><dd>${g("assoc")}</dd><dt>Em processo de cadastro</dt><dd>${g("pcad")}</dd><dt>Em processo de associação</dt><dd>${g("passoc")}</dd></dl>`;
   $("fv").hidden=false;$("fx").focus()}
 function editC(id){const r=C.find(x=>x.id==id);if(!r)return;cEdit=r.id;
-  $("cn").value=r.nome;$("cc").value=r.cpf;$("ce").value=r.email;$("cs").value=r.sispat;$("cad").value=r.cad;
+  $("cn").value=r.nome;$("cs").value=r.sispat;$("cad").value=r.cad;
   document.querySelectorAll("#rel select").forEach(s=>s.value=(r.rel||{})[s.dataset.emp]||"");syncRel();
   $("ctitle").textContent="Editando: "+r.nome;$("fv").hidden=true;scrollTo({top:0,behavior:"smooth"});$("cn").focus()}
 $("cad").addEventListener("change",syncRel);
-$("cc").addEventListener("input",()=>{$("cc").value=fmtCpf($("cc").value)});
 $("cclr").onclick=clearC;
 $("cf").addEventListener("submit",e=>{e.preventDefault();
-  const nome=$("cn").value.trim().replace(/\s+/g," "),cpf=fmtCpf($("cc").value),m=$("cmsg");
+  const nome=$("cn").value.trim().replace(/\s+/g," "),sispat=$("cs").value.trim(),m=$("cmsg");
   if(nome.split(" ").length<2){m.textContent="Informe o nome completo (nome e sobrenome).";return}
-  if(!cpfOk(cpf)){m.textContent="CPF inválido. Confira os 11 dígitos.";return}
-  if(C.some(x=>x.id!==cEdit&&digits(x.cpf)===digits(cpf))){m.textContent="Já existe um colaborador com este CPF.";return}
+  if(C.some(x=>x.id!==cEdit&&(x.sispat||"").trim().toLowerCase()===sispat.toLowerCase())){m.textContent="Já existe um colaborador com este SISPAT.";return}
   const rel={};document.querySelectorAll("#rel select").forEach(s=>{if(s.value)rel[s.dataset.emp]=s.value});
-  const r={nome,cpf,email:$("ce").value.trim(),sispat:$("cs").value.trim(),cad:$("cad").value,rel,upd:Date.now()};
+  const r={nome,sispat,cad:$("cad").value,rel,upd:Date.now()};
   const rec=cEdit?{...r,id:cEdit}:{...r,id:Date.now()};
   put("cadastros",rec,(cEdit?"Cadastro editado: ":"Cadastro criado: ")+nome);
   clearC();
@@ -394,7 +387,7 @@ function chk(){
 }
 $("imp").onclick=async()=>{if(!IMP)return;$("imp").disabled=true;
   for(const r of IMP.d)await put("embarques",r,null);
-  for(const r of IMP.c)await put("cadastros",r,null);
+  for(const r of IMP.c){const {cpf,email,...q}=r;await put("cadastros",q,null)}
   await log("Dados importados do navegador ("+IMP.n+" registros)");$("imp").hidden=true;$("imp").disabled=false};
 $("hb").onclick=()=>{$("hv").hidden=false;$("hx").focus()};
 $("hx").onclick=()=>{$("hv").hidden=true};
@@ -402,7 +395,7 @@ $("hv").addEventListener("click",e=>{if(e.target===$("hv"))$("hv").hidden=true})
 document.addEventListener("keydown",e=>{if(e.key==="Escape")$("hv").hidden=true});
 async function init(){
   let db=null;try{db=window.claude?await claude.use("db"):null}catch(e){}
-  if(!db){load();loadC();try{LOG=JSON.parse(localStorage.getItem(LK)||"[]")}catch(e){}render();renderC();renderLog();setMode("local");return}
+  if(!db){load();loadC();C=C.map(({cpf,email,...x})=>x);saveC();try{LOG=JSON.parse(localStorage.getItem(LK)||"[]")}catch(e){}render();renderC();renderLog();setMode("local");return}
   DBX=db;try{USR=await claude.use("user")}catch(e){}
   setMode("shared");
   db.collection("embarques").onSnapshot(s=>{D=s.docs.map(d=>({...d.data(),id:d.id}));if(!s.metadata.fromCache)okD=true;render();chk()},fail);
