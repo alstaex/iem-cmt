@@ -91,6 +91,7 @@ fieldset.rel legend{font-weight:600;font-size:13px;color:var(--mut);padding:0 6p
 .bar #ultx{flex:1 1 280px;font-size:14px}
 .mode{font-size:13px;font-weight:600;color:var(--grn)}.mode.bad{color:var(--red)}.mode.loc{color:var(--mut)}
 .bar input{width:auto;flex:0 1 210px}
+.mode.warn{color:var(--org)}
 </style>
 </head>
 <body>
@@ -104,7 +105,8 @@ fieldset.rel legend{font-weight:600;font-size:13px;color:var(--mut);padding:0 6p
 </nav></div></header>
 
 <main class="wrap">
-<div class="bar"><span id="ultx" role="status">Carregando…</span><input id="me" placeholder="Seu nome (para o histórico)" aria-label="Seu nome"><span class="mode loc" id="mode">● Conectando…</span><button class="btn sm" id="hb" type="button">Histórico de alterações</button><button class="btn sm p" id="imp" type="button" hidden></button></div>
+<div class="bar"><span id="ultx" role="status">Carregando…</span><input id="me" placeholder="Seu nome (para o histórico)" aria-label="Seu nome"><span class="mode loc" id="mode">● Conectando…</span><button class="btn sm" id="hb" type="button">Histórico de alterações</button><button class="btn sm p" id="imp" type="button" hidden></button>
+<button class="btn sm" id="sv" type="button" hidden>💾 Salvar alterações</button><button class="btn sm" id="rl" type="button" hidden>↻ Atualizar dados</button><button class="btn sm" id="cg" type="button" hidden>⚙ GitHub</button><span class="mode loc" id="ghs" role="status"></span></div>
 <section class="tab" id="p1" role="tabpanel" aria-labelledby="t1">
 <div class="panel">
 <h2 id="ftitle">Nova programação</h2>
@@ -194,6 +196,15 @@ fieldset.rel legend{font-weight:600;font-size:13px;color:var(--mut);padding:0 6p
 <div class="ov" id="ov" hidden><div class="md" role="dialog" aria-modal="true" aria-labelledby="mt"><div class="mh"><h2 id="mt"></h2><button class="btn" id="mx" type="button">Fechar</button></div><div class="tw"><table style="min-width:560px"><thead><tr><th>Colaborador</th><th>Função</th><th>Sonda</th><th>Embarque</th><th>Desembarque</th><th>Responsável</th><th>Observações</th></tr></thead><tbody id="mb"></tbody></table></div></div></div>
 <div class="ov" id="hv" hidden><div class="md" role="dialog" aria-modal="true" aria-labelledby="ht"><div class="mh"><h2 id="ht">Histórico de alterações</h2><button class="btn" id="hx" type="button">Fechar</button></div><ul class="hist" id="hl"></ul></div></div>
 <div class="ov" id="pv" hidden><div class="md" role="dialog" aria-modal="true" aria-labelledby="pt" style="max-width:380px"><h2 id="pt">Aba protegida</h2><form id="pf" autocomplete="off"><label>Senha para acessar o Controle de Cadastros<input id="pe" type="password" required></label><p id="pm" role="alert" style="color:var(--red);margin:8px 0 0;min-height:1.4em"></p><div class="row" style="margin-top:6px"><button class="btn p" type="submit">Entrar</button><button class="btn" type="button" id="pc">Cancelar</button></div></form></div></div>
+<div class="ov" id="gv" hidden><div class="md" role="dialog" aria-modal="true" aria-labelledby="gt" style="max-width:520px"><h2 id="gt">Configurar salvamento no GitHub</h2>
+<form id="gf" class="grid" style="grid-template-columns:1fr" autocomplete="off">
+<label>Repositório (usuario/repositorio)<input id="g1" placeholder="minha-empresa/embarques" required></label>
+<label>Branch<input id="g2" required></label>
+<label>Arquivo de dados<input id="g3" required></label>
+<label>Token de acesso (Fine-grained, permissão Contents: Read and write)<input id="g4" type="password" required></label>
+<p style="margin:0;color:var(--mut);font-size:13px">O token fica guardado só neste navegador. Só quem vai clicar em Salvar alterações precisa configurar.</p>
+<div class="row" style="margin-top:0"><button class="btn p" type="submit">Guardar configuração</button><button class="btn" type="button" id="gc">Cancelar</button></div>
+</form></div></div>
 <script>
 const ST=["Vaga Solicitada","Em Cadastro","Aguardando Aprovação","Embarque Confirmado","Embarcado","Finalizado","Cancelado"];
 const KEY="embarques-iem-cmt-v1";
@@ -377,13 +388,13 @@ async function put(kind,rec,txt){
   if(DBX){try{await DBX.doc(kind+"/"+id).set(JSON.parse(JSON.stringify(data)));if(txt)await log(txt);setMode("shared")}catch(e){fail(e)}return}
   const a=kind==="embarques"?D:C,i=a.findIndex(x=>x.id==id);if(i<0)a.push(rec);else a[i]=rec;
   if(kind==="embarques"){save();render()}else{saveC();renderC()}
-  if(txt)await log(txt);
+  markDirty();if(txt)await log(txt);
 }
 async function del(kind,id,txt){
   if(REST){try{await rq(kind+"/"+id,"DELETE");await log(txt);await pull()}catch(e){fail(e)}return}
   if(DBX){try{await DBX.doc(kind+"/"+id).delete();await log(txt);setMode("shared")}catch(e){fail(e)}return}
   if(kind==="embarques"){D=D.filter(x=>x.id!=id);save();render()}else{C=C.filter(x=>x.id!=id);saveC();renderC()}
-  await log(txt);
+  markDirty();await log(txt);
 }
 function chk(){
   if(!okD||!okC||D.length||C.length){$("imp").hidden=true;return}
@@ -422,7 +433,7 @@ async function pull(){
 async function init(){
   if(REST){setMode("shared");await pull();setInterval(pull,8000);document.addEventListener("visibilitychange",()=>{if(!document.hidden)pull()});return}
   let db=null;try{db=window.claude?await claude.use("db"):null}catch(e){}
-  if(!db){load();loadC();C=C.map(({cpf,email,...x})=>x);saveC();try{LOG=JSON.parse(localStorage.getItem(LK)||"[]")}catch(e){}render();renderC();renderLog();setMode("local");return}
+  if(!db){load();loadC();C=C.map(({cpf,email,...x})=>x);saveC();try{LOG=JSON.parse(localStorage.getItem(LK)||"[]")}catch(e){}render();renderC();renderLog();setMode("local");ghInit();return}
   DBX=db;try{USR=await claude.use("user")}catch(e){}
   setMode("shared");
   db.collection("embarques").onSnapshot(s=>{D=s.docs.map(d=>({...d.data(),id:d.id}));if(!s.metadata.fromCache)okD=true;render();chk()},fail);
@@ -440,6 +451,71 @@ $("pf").addEventListener("submit",async e=>{e.preventDefault();
 $("pc").onclick=()=>{$("pv").hidden=true};
 $("pv").addEventListener("click",e=>{if(e.target===$("pv"))$("pv").hidden=true});
 document.addEventListener("keydown",e=>{if(e.key==="Escape")$("pv").hidden=true});
+// ===== SALVAMENTO NO GITHUB (arquivo dados.json no mesmo repositório) =====
+let GHMODE=false,DIRTY=false,BASE=0,CONF=false,busyS=false,armR=false,GH={repo:"",branch:"main",path:"dados.json",token:""};
+const ls=(k,v)=>{try{if(v===undefined)return localStorage.getItem(k);localStorage.setItem(k,v)}catch(e){}return null};
+const apiUrl=()=>"https://api.github.com/repos/"+GH.repo+"/contents/"+encodeURI(GH.path);
+const ghHd=()=>({Authorization:"Bearer "+GH.token,Accept:"application/vnd.github+json"});
+const dec=b=>new TextDecoder().decode(Uint8Array.from(atob(b.replace(/\s/g,"")),c=>c.charCodeAt(0)));
+const enc=t=>{const b=new TextEncoder().encode(t);let x="";for(let i=0;i<b.length;i+=8192)x+=String.fromCharCode(...b.subarray(i,i+8192));return btoa(x)};
+function ghMsg(t,bad){const e=$("ghs");e.textContent=t;e.className="mode"+(bad?" bad":"")}
+function ghUi(){if(!GHMODE)return;
+  ghMsg(DIRTY?"● Alterações não salvas: clique em Salvar para os outros usuários verem":(BASE?"● Salvo no GitHub em "+stamp(BASE):"● Sem alterações pendentes"));
+  $("ghs").className="mode"+(DIRTY?" warn":"");$("sv").className="btn sm"+(DIRTY?" p":"");$("sv").textContent="💾 Salvar alterações";CONF=false}
+function markDirty(){if(!GHMODE)return;DIRTY=true;ls("gh-dirty","1");ghUi()}
+function ghErr(c){return c==401?"⚠ Token inválido ou expirado.":c==403?"⚠ Sem permissão: o token precisa de Contents: Read and write neste repositório.":c==404?"⚠ Repositório, branch ou arquivo não encontrado. Confira ⚙ GitHub.":(c==409||c==422)?"⚠ Conflito ao salvar. Clique em Atualizar e tente de novo.":"⚠ Falha ao salvar ("+(c||"rede")+"). Verifique a conexão."}
+async function readRemote(){
+  try{let t;
+    if(GH.token&&GH.repo){const r=await fetch(apiUrl()+"?ref="+encodeURIComponent(GH.branch),{headers:ghHd(),cache:"no-store"});if(r.status===404)return"none";if(!r.ok)return null;t=dec((await r.json()).content)}
+    else{const r=await fetch(GH.path+"?t="+Date.now(),{cache:"no-store"});if(r.status===404)return"none";if(!r.ok)return null;t=await r.text()}
+    return JSON.parse(t)}catch(e){return null}
+}
+function applyRemote(d){
+  D=d.embarques||[];C=d.cadastros||[];LOG=d.log||[];BASE=d.savedAt||0;DIRTY=false;CONF=false;
+  save();saveC();ls(LK,JSON.stringify(LOG));ls("gh-dirty","0");ls("gh-base",String(BASE));
+  render();renderC();renderLog();ghUi();
+}
+async function ghInit(){
+  GHMODE=true;$("mode").hidden=true;["sv","rl","cg"].forEach(i=>$(i).hidden=false);
+  try{GH={...GH,...JSON.parse(ls("gh-cfg")||"{}")}}catch(e){}
+  DIRTY=ls("gh-dirty")==="1";BASE=+ls("gh-base")||0;ghUi();
+  const r=await readRemote();
+  if(r===null){ghMsg("⚠ Não foi possível ler os dados do GitHub (usando a cópia deste navegador)",1);return}
+  if(r==="none"){if((D.length||C.length)&&!DIRTY)markDirty();return}
+  if(!DIRTY)applyRemote(r);
+}
+async function saveRemote(force){
+  if(!GH.token||!GH.repo){openCfg();return}
+  if(busyS)return;busyS=true;$("sv").disabled=true;ghMsg("Salvando…");
+  try{
+    const hd=ghHd(),u=apiUrl();let sha=null,cur=null;
+    const g=await fetch(u+"?ref="+encodeURIComponent(GH.branch),{headers:hd,cache:"no-store"});
+    if(g.ok){const j=await g.json();sha=j.sha;try{cur=JSON.parse(dec(j.content))}catch(e){}}else if(g.status!==404)throw{code:g.status};
+    if(!force&&cur&&(cur.savedAt||0)!==BASE){CONF=true;$("sv").textContent="⚠ Sobrescrever mesmo assim";ghMsg("Outra pessoa salvou em "+stamp(cur.savedAt)+", depois que você abriu. Clique em Atualizar para ver as mudanças dela (descarta as suas) ou em Sobrescrever mesmo assim.",1);return}
+    await log("Alterações salvas no GitHub");
+    const t=Date.now(),body=JSON.stringify({embarques:D,cadastros:C,log:LOG,savedAt:t});
+    const pr=await fetch(u,{method:"PUT",headers:hd,body:JSON.stringify({message:"Atualização via app"+(ME?" ("+ME+")":""),content:enc(body),branch:GH.branch,...(sha?{sha}:{})})});
+    if(!pr.ok)throw{code:pr.status};
+    BASE=t;DIRTY=false;ls("gh-base",String(t));ls("gh-dirty","0");ghUi();
+  }catch(e){ghMsg(ghErr(e.code),1)}
+  finally{busyS=false;$("sv").disabled=false}
+}
+$("sv").onclick=()=>saveRemote(CONF);
+$("rl").onclick=async()=>{
+  if(DIRTY&&!armR){armR=true;$("rl").textContent="Descartar minhas alterações?";setTimeout(()=>{armR=false;$("rl").textContent="↻ Atualizar dados"},4000);return}
+  armR=false;$("rl").textContent="↻ Atualizar dados";
+  const r=await readRemote();
+  if(r===null)ghMsg("⚠ Não foi possível ler os dados do GitHub.",1);else if(r==="none")ghMsg("Ainda não há dados salvos no GitHub.");else applyRemote(r);
+};
+function openCfg(){$("g1").value=GH.repo;$("g2").value=GH.branch;$("g3").value=GH.path;$("g4").value=GH.token;$("gv").hidden=false;$("g1").focus()}
+$("cg").onclick=openCfg;
+$("gc").onclick=()=>{$("gv").hidden=true};
+$("gv").addEventListener("click",e=>{if(e.target===$("gv"))$("gv").hidden=true});
+document.addEventListener("keydown",e=>{if(e.key==="Escape")$("gv").hidden=true});
+$("gf").addEventListener("submit",e=>{e.preventDefault();
+  GH={repo:$("g1").value.trim().replace(/^\/+|\/+$/g,""),branch:$("g2").value.trim()||"main",path:$("g3").value.trim()||"dados.json",token:$("g4").value.trim()};
+  ls("gh-cfg",JSON.stringify(GH));$("gv").hidden=true;ghMsg("Configuração guardada. Clique em Salvar alterações.");
+});
 syncRel();render();renderC();init();
 </script>
 </body>
