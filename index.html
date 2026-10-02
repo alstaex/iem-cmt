@@ -90,6 +90,7 @@ fieldset.rel legend{font-weight:600;font-size:13px;color:var(--mut);padding:0 6p
 .bar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;background:var(--card);border:1px solid var(--line);border-left:5px solid var(--ac);border-radius:10px;padding:10px 14px;margin-bottom:16px}
 .bar #ultx{flex:1 1 280px;font-size:14px}
 .mode{font-size:13px;font-weight:600;color:var(--grn)}.mode.bad{color:var(--red)}.mode.loc{color:var(--mut)}
+.bar input{width:auto;flex:0 1 210px}
 </style>
 </head>
 <body>
@@ -103,7 +104,7 @@ fieldset.rel legend{font-weight:600;font-size:13px;color:var(--mut);padding:0 6p
 </nav></div></header>
 
 <main class="wrap">
-<div class="bar"><span id="ultx" role="status">Carregando…</span><span class="mode loc" id="mode">● Conectando…</span><button class="btn sm" id="hb" type="button">Histórico de alterações</button><button class="btn sm p" id="imp" type="button" hidden></button></div>
+<div class="bar"><span id="ultx" role="status">Carregando…</span><input id="me" placeholder="Seu nome (para o histórico)" aria-label="Seu nome"><span class="mode loc" id="mode">● Conectando…</span><button class="btn sm" id="hb" type="button">Histórico de alterações</button><button class="btn sm p" id="imp" type="button" hidden></button></div>
 <section class="tab" id="p1" role="tabpanel" aria-labelledby="t1">
 <div class="panel">
 <h2 id="ftitle">Nova programação</h2>
@@ -192,6 +193,7 @@ fieldset.rel legend{font-weight:600;font-size:13px;color:var(--mut);padding:0 6p
 
 <div class="ov" id="ov" hidden><div class="md" role="dialog" aria-modal="true" aria-labelledby="mt"><div class="mh"><h2 id="mt"></h2><button class="btn" id="mx" type="button">Fechar</button></div><div class="tw"><table style="min-width:560px"><thead><tr><th>Colaborador</th><th>Função</th><th>Sonda</th><th>Embarque</th><th>Desembarque</th><th>Responsável</th><th>Observações</th></tr></thead><tbody id="mb"></tbody></table></div></div></div>
 <div class="ov" id="hv" hidden><div class="md" role="dialog" aria-modal="true" aria-labelledby="ht"><div class="mh"><h2 id="ht">Histórico de alterações</h2><button class="btn" id="hx" type="button">Fechar</button></div><ul class="hist" id="hl"></ul></div></div>
+<div class="ov" id="pv" hidden><div class="md" role="dialog" aria-modal="true" aria-labelledby="pt" style="max-width:380px"><h2 id="pt">Aba protegida</h2><form id="pf" autocomplete="off"><label>Senha para acessar o Controle de Cadastros<input id="pe" type="password" required></label><p id="pm" role="alert" style="color:var(--red);margin:8px 0 0;min-height:1.4em"></p><div class="row" style="margin-top:6px"><button class="btn p" type="submit">Entrar</button><button class="btn" type="button" id="pc">Cancelar</button></div></form></div></div>
 <script>
 const ST=["Vaga Solicitada","Em Cadastro","Aguardando Aprovação","Embarque Confirmado","Embarcado","Finalizado","Cancelado"];
 const KEY="embarques-iem-cmt-v1";
@@ -298,6 +300,7 @@ $("tb").addEventListener("click",e=>{
 });
 ["q","fs","ft"].forEach(i=>$(i).addEventListener("input",renderTable));
 document.querySelectorAll("nav button").forEach(b=>b.onclick=()=>{
+  if(b.id==="t3"&&!UNL){askPw(()=>b.click());return}
   document.querySelectorAll("nav button").forEach(x=>x.setAttribute("aria-selected",x===b));
   ["p1","p2","p3"].forEach((k,n)=>$(k).hidden=b.id!=="t"+(n+1));if(b.id==="t2")renderDash();
 });
@@ -356,26 +359,28 @@ document.addEventListener("keydown",e=>{if(e.key==="Escape")$("fv").hidden=true}
 const LK="log-iem-cmt-v1";
 const stamp=t=>new Date(t).toLocaleString("pt-BR",{dateStyle:"short",timeStyle:"short"});
 function setMode(m){const e=$("mode");e.className="mode"+(m==="shared"?"":" loc");e.textContent=m==="shared"?"● Dados compartilhados entre usuários":"● Salvo apenas neste navegador"}
-function fail(e){const m=$("mode");m.className="mode bad";m.textContent=e&&e.code==="invalid_argument"?"⚠ Sem permissão para salvar (acesso somente leitura)":"⚠ Falha ao salvar ou sincronizar. Tente novamente."}
+function fail(e){const m=$("mode");m.className="mode bad";m.textContent=e&&/^(invalid_argument|http_40[13])$/.test(e.code)?"⚠ Sem permissão para salvar (verifique o acesso ou as regras do banco)":"⚠ Falha ao salvar ou sincronizar. Tente novamente."}
 async function who(ids){const need=ids.filter(i=>i&&!NAMES[i]);if(need.length&&USR){try{const p=await USR.profiles(need);need.forEach(i=>NAMES[i]=(p[i]&&p[i].name)||"")}catch(e){}}return u=>NAMES[u]||"Usuário"}
 async function renderLog(){
   const nm=await who([...new Set(LOG.map(x=>x.u))]);
-  $("ultx").textContent=LOG.length?"Última alteração: "+LOG[0].x+" — por "+nm(LOG[0].u)+", "+stamp(LOG[0].t):"Nenhuma alteração registrada ainda.";
-  $("hl").innerHTML=LOG.length?LOG.map(x=>`<li>${esc(x.x)}<small>${esc(nm(x.u))} · ${stamp(x.t)}</small></li>`).join(""):'<li class="empty">Nenhuma alteração registrada ainda.</li>';
+  $("ultx").textContent=LOG.length?"Última alteração: "+LOG[0].x+" — por "+(LOG[0].n||nm(LOG[0].u))+", "+stamp(LOG[0].t):"Nenhuma alteração registrada ainda.";
+  $("hl").innerHTML=LOG.length?LOG.map(x=>`<li>${esc(x.x)}<small>${esc(x.n||nm(x.u))} · ${stamp(x.t)}</small></li>`).join(""):'<li class="empty">Nenhuma alteração registrada ainda.</li>';
 }
 async function log(txt){
   let uid=null;try{uid=DBX&&USR?await USR.id():null}catch(e){}
-  LOG=[{t:Date.now(),u:uid,x:txt},...LOG].slice(0,100);
-  if(DBX)await DBX.doc("meta/log").set({itens:LOG});else{try{localStorage.setItem(LK,JSON.stringify(LOG))}catch(e){}renderLog()}
+  LOG=[{t:Date.now(),u:uid,n:ME,x:txt},...LOG].slice(0,100);
+  if(REST)await rq("meta/log","PUT",{itens:LOG});else if(DBX)await DBX.doc("meta/log").set({itens:LOG});else{try{localStorage.setItem(LK,JSON.stringify(LOG))}catch(e){}renderLog()}
 }
 async function put(kind,rec,txt){
   const {id,...data}=rec;
+  if(REST){try{await rq(kind+"/"+id,"PUT",JSON.parse(JSON.stringify(data)));if(txt)await log(txt);if(txt!==null)await pull()}catch(e){fail(e)}return}
   if(DBX){try{await DBX.doc(kind+"/"+id).set(JSON.parse(JSON.stringify(data)));if(txt)await log(txt);setMode("shared")}catch(e){fail(e)}return}
   const a=kind==="embarques"?D:C,i=a.findIndex(x=>x.id==id);if(i<0)a.push(rec);else a[i]=rec;
   if(kind==="embarques"){save();render()}else{saveC();renderC()}
   if(txt)await log(txt);
 }
 async function del(kind,id,txt){
+  if(REST){try{await rq(kind+"/"+id,"DELETE");await log(txt);await pull()}catch(e){fail(e)}return}
   if(DBX){try{await DBX.doc(kind+"/"+id).delete();await log(txt);setMode("shared")}catch(e){fail(e)}return}
   if(kind==="embarques"){D=D.filter(x=>x.id!=id);save();render()}else{C=C.filter(x=>x.id!=id);saveC();renderC()}
   await log(txt);
@@ -388,12 +393,34 @@ function chk(){
 $("imp").onclick=async()=>{if(!IMP)return;$("imp").disabled=true;
   for(const r of IMP.d)await put("embarques",r,null);
   for(const r of IMP.c){const {cpf,email,...q}=r;await put("cadastros",q,null)}
-  await log("Dados importados do navegador ("+IMP.n+" registros)");$("imp").hidden=true;$("imp").disabled=false};
+  await log("Dados importados do navegador ("+IMP.n+" registros)");if(REST)await pull();$("imp").hidden=true;$("imp").disabled=false};
 $("hb").onclick=()=>{$("hv").hidden=false;$("hx").focus()};
 $("hx").onclick=()=>{$("hv").hidden=true};
 $("hv").addEventListener("click",e=>{if(e.target===$("hv"))$("hv").hidden=true});
 document.addEventListener("keydown",e=>{if(e.key==="Escape")$("hv").hidden=true});
+// ===== CONFIGURAÇÃO DO BANCO COMPARTILHADO =====
+// Cole abaixo a URL do seu Firebase Realtime Database (ex.: "https://meu-projeto-default-rtdb.firebaseio.com").
+// Com a URL preenchida, todos os navegadores que abrirem este arquivo veem os mesmos dados.
+const DB_URL="";
+const REST=DB_URL.trim().replace(/\/+$/,"");
+let ME="",LAST="";try{ME=localStorage.getItem("meu-nome")||""}catch(e){}
+$("me").value=ME;
+$("me").addEventListener("input",()=>{ME=$("me").value.trim();try{localStorage.setItem("meu-nome",ME)}catch(e){}});
+async function rq(path,method,body){
+  const r=await fetch(REST+"/"+path+".json",{method,headers:{"Content-Type":"application/json"},body:body===undefined?undefined:JSON.stringify(body)});
+  if(!r.ok)throw{code:"http_"+r.status};
+  return r.json();
+}
+const toList=o=>!o?[]:(Array.isArray(o)?o.map((v,i)=>v&&{...v,id:String(i)}):Object.entries(o).map(([k,v])=>({...v,id:k}))).filter(Boolean);
+async function pull(){
+  try{const d=(await rq("","GET"))||{};setMode("shared");
+    const sig=JSON.stringify(d);if(sig===LAST)return;LAST=sig;
+    D=toList(d.embarques);C=toList(d.cadastros);LOG=(d.meta&&d.meta.log&&d.meta.log.itens)||[];
+    okD=okC=true;render();renderC();renderLog();chk();
+  }catch(e){fail(e)}
+}
 async function init(){
+  if(REST){setMode("shared");await pull();setInterval(pull,8000);document.addEventListener("visibilitychange",()=>{if(!document.hidden)pull()});return}
   let db=null;try{db=window.claude?await claude.use("db"):null}catch(e){}
   if(!db){load();loadC();C=C.map(({cpf,email,...x})=>x);saveC();try{LOG=JSON.parse(localStorage.getItem(LK)||"[]")}catch(e){}render();renderC();renderLog();setMode("local");return}
   DBX=db;try{USR=await claude.use("user")}catch(e){}
@@ -402,6 +429,17 @@ async function init(){
   db.collection("cadastros").onSnapshot(s=>{C=s.docs.map(d=>({...d.data(),id:d.id}));if(!s.metadata.fromCache)okC=true;renderC();chk()},fail);
   db.doc("meta/log").onSnapshot(s=>{LOG=s.exists?(s.data().itens||[]):[];renderLog()},fail);
 }
+const PW_HASH="4bb082be1188a4ae677bf16f4562cc0ec56a50bcc95542975b1ac8e7fb8e96c4";
+let UNL=false,afterPw=null;try{UNL=sessionStorage.getItem("aba3")==="1"}catch(e){}
+async function sha(t){const b=await crypto.subtle.digest("SHA-256",new TextEncoder().encode(t));return[...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,"0")).join("")}
+function askPw(cb){afterPw=cb;$("pe").value="";$("pm").textContent="";$("pv").hidden=false;$("pe").focus()}
+$("pf").addEventListener("submit",async e=>{e.preventDefault();
+  try{if(await sha($("pe").value.trim().toUpperCase())===PW_HASH){UNL=true;try{sessionStorage.setItem("aba3","1")}catch(x){}$("pv").hidden=true;if(afterPw)afterPw()}else{$("pm").textContent="Senha incorreta.";$("pe").select()}}
+  catch(x){$("pm").textContent="Este navegador não consegue validar a senha (abra a página por https)."}
+});
+$("pc").onclick=()=>{$("pv").hidden=true};
+$("pv").addEventListener("click",e=>{if(e.target===$("pv"))$("pv").hidden=true});
+document.addEventListener("keydown",e=>{if(e.key==="Escape")$("pv").hidden=true});
 syncRel();render();renderC();init();
 </script>
 </body>
