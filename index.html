@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Planejamento de Embarques IEM/CMT</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@600;700&display=swap">
+<style>
+:root{--bg:#eef2f5;--card:#fff;--ink:#12232f;--mut:#5d7080;--line:#d5dee5;--hd:#0f2a3d;--ac:#f2a900;--blue:#2f6fd0;--yel:#e1b400;--org:#ee7d1a;--grn:#2b9a57;--gry:#7b8892;--red:#c8382f;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0d1820;--card:#15252f;--ink:#e6edf2;--mut:#93a6b4;--line:#27404f;--hd:#091219}}
+:root[data-theme="dark"]{--bg:#0d1820;--card:#15252f;--ink:#e6edf2;--mut:#93a6b4;--line:#27404f;--hd:#091219}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:400 15px/1.45 Barlow,system-ui,sans-serif}
+header{background:var(--hd);color:#fff;padding:22px 20px 0;border-bottom:4px solid var(--ac)}
+.wrap{max-width:1200px;margin:0 auto}
+h1{font:700 clamp(26px,4vw,38px)/1.1 "Barlow Condensed",Barlow,sans-serif;margin:0;letter-spacing:.3px}
+header p{margin:4px 0 16px;color:#a9bfce}
+nav{display:flex;gap:4px;flex-wrap:wrap}
+nav button{background:transparent;border:0;color:#a9bfce;font:600 15px Barlow,sans-serif;padding:11px 18px;cursor:pointer;border-radius:8px 8px 0 0}
+nav button[aria-selected=true]{background:var(--bg);color:var(--ink)}
+nav button:focus-visible,.btn:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:3px solid var(--ac);outline-offset:1px}
+main{padding:20px}
+section.tab[hidden]{display:none}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:18px;margin-bottom:20px}
+h2{font:700 22px "Barlow Condensed",Barlow,sans-serif;margin:0 0 14px}
+h3{font:600 16px Barlow,sans-serif;margin:0 0 10px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px}
+label{display:flex;flex-direction:column;gap:4px;font-weight:600;font-size:13px;color:var(--mut)}
+input,select,textarea{font:400 15px Barlow,sans-serif;padding:9px 10px;border:1px solid var(--line);border-radius:7px;background:var(--bg);color:var(--ink);width:100%}
+.full{grid-column:1/-1}
+.row{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
+.btn{font:600 15px Barlow,sans-serif;padding:10px 18px;border-radius:7px;border:1px solid var(--line);background:var(--card);color:var(--ink);cursor:pointer}
+.btn.p{background:var(--ac);border-color:var(--ac);color:#1b1500}
+.btn.sm{padding:5px 10px;font-size:13px}
+.btn.d{color:var(--red)}
+.tw{overflow-x:auto}
+table{width:100%;border-collapse:collapse;min-width:640px}
+th,td{text-align:left;padding:9px 10px;border-bottom:1px solid var(--line);font-size:14px;vertical-align:top}
+th{color:var(--mut);font-weight:600;font-size:13px}
+.tag{display:inline-block;padding:2px 9px;border-radius:12px;font-size:12px;font-weight:600;color:#fff;white-space:nowrap}
+.s0{background:var(--blue)}.s1{background:var(--yel);color:#2a2200}.s2{background:var(--org)}.s3{background:var(--grn)}.s4{background:#3a7f8c}.s5{background:var(--gry)}.s6{background:var(--red)}
+.filters{display:grid;grid-template-columns:2fr 1fr 1fr;gap:10px;margin-bottom:12px}
+@media(max-width:640px){.filters{grid-template-columns:1fr}main{padding:14px}}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;margin-bottom:20px}
+.kpi{background:var(--card);border:1px solid var(--line);border-left:5px solid var(--ac);border-radius:10px;padding:14px 16px}
+.kpi b{display:block;font:700 40px/1 "Barlow Condensed",sans-serif;margin-top:6px}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+@media(max-width:860px){.two{grid-template-columns:1fr}}
+.two .panel{margin:0}
+.lg{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:14px}
+.lc{border-radius:10px;padding:14px;color:#fff;min-height:110px}
+.lc.s1,.lc.s1 small{color:#2a2200}
+.lc strong{font:700 34px/1 "Barlow Condensed",sans-serif;display:block}
+.lc ul{margin:8px 0 0;padding-left:18px;font-size:13px}
+.empty{color:var(--mut);padding:14px 0}
+.hist{margin:0;padding:0;list-style:none}
+.hist li{padding:8px 0;border-bottom:1px solid var(--line);font-size:14px}
+.hist small{color:var(--mut);display:block}
+.seg{border:0;padding:0;margin:0;display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.seg legend{font-weight:600;font-size:13px;color:var(--mut);padding:0;margin-bottom:6px}
+.seg label{flex-direction:row;align-items:center;gap:10px;border:2px solid var(--line);border-radius:9px;padding:11px 14px;cursor:pointer;color:var(--ink);font-size:15px}
+.seg label small{display:block;font-weight:400;color:var(--mut)}
+.seg label:has(input:checked){border-color:var(--ac);background:rgba(242,169,0,.14)}
+.seg input{width:auto;accent-color:var(--ac)}
+.warn{background:rgba(200,56,47,.12);border:2px solid var(--red);border-radius:9px;padding:12px 14px}
+.warn p{margin:0;font-weight:600}
+.conf{color:var(--red);font-weight:700}
+.lc{border:0;text-align:left;font:inherit;width:100%;cursor:pointer;transition:transform .12s}
+.lc:hover{transform:translateY(-2px)}
+.lc:focus-visible{outline:3px solid var(--ac);outline-offset:2px}
+.lc em{display:block;font-style:normal;font-size:12px;margin-top:8px;opacity:.85}
+.nl{display:block;font-size:13px;margin-top:8px}.nl span{display:block}
+.ov{position:fixed;inset:0;background:rgba(5,15,22,.6);display:flex;align-items:center;justify-content:center;padding:16px;z-index:50}
+.ov[hidden]{display:none}
+.md{background:var(--card);color:var(--ink);border-radius:12px;max-width:900px;width:100%;max-height:85vh;overflow:auto;padding:18px;border-top:6px solid var(--ac)}
+.mh{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:12px}
+.mh h2{margin:0;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.act{display:flex;gap:6px}
+.btn.ok{color:var(--grn);border-color:var(--grn)}
+.chip{display:inline-block;padding:3px 10px;border-radius:14px;font-size:13px;font-weight:600;color:#fff;margin:2px 4px 2px 0}
+.k-cad{background:var(--grn)}.k-assoc{background:var(--blue)}.k-pcad{background:var(--org)}.k-passoc{background:var(--yel);color:#2a2200}
+fieldset.rel{border:1px solid var(--line);border-radius:9px;padding:12px;margin:0}
+fieldset.rel legend{font-weight:600;font-size:13px;color:var(--mut);padding:0 6px}
+.link{background:none;border:0;border-bottom:2px solid var(--ac);padding:0;font:inherit;font-weight:600;color:var(--ink);cursor:pointer;text-align:left}
+.link:focus-visible{outline:3px solid var(--ac);outline-offset:2px}
+.ficha dl{display:grid;grid-template-columns:210px 1fr;gap:10px 12px;margin:0 0 14px}
+.ficha dt{color:var(--mut);font-weight:600}.ficha dd{margin:0}
+@media(max-width:520px){.ficha dl{grid-template-columns:1fr;gap:2px}.ficha dd{margin-bottom:8px}}
+</style>
+</head>
+<body>
+<header><div class="wrap">
+<h1>Planejamento de Embarques</h1>
+<p>Controle mensal da equipe de manutenção offshore</p>
+<nav role="tablist">
+<button role="tab" id="t1" aria-selected="true" aria-controls="p1">01 - Cadastro de Programações</button>
+<button role="tab" id="t2" aria-selected="false" aria-controls="p2">02 - Dashboard Operacional</button>
+<button role="tab" id="t3" aria-selected="false" aria-controls="p3">03 - Controle de Cadastros</button>
+</nav></div></header>
+
+<main class="wrap">
+<section class="tab" id="p1" role="tabpanel" aria-labelledby="t1">
+<div class="panel">
+<h2 id="ftitle">Nova programação</h2>
+<form id="f" class="grid" autocomplete="off">
+<fieldset class="seg full"><legend>Tipo de programação</legend>
+<label><input type="radio" name="tipo" value="atual" checked><span>Programação atual<small>Aparece em Programação do Mês Atual</small></span></label>
+<label><input type="radio" name="tipo" value="futura"><span>Programação futura<small>Aparece em Programação do Próximo Mês</small></span></label>
+</fieldset>
+<label>Colaborador<input id="colab" required></label>
+<label>Função<input id="func" required></label>
+<label>Sonda<input id="sonda" required></label>
+<label>Data Embarque<input id="emb" type="date" required></label>
+<label>Data Desembarque<input id="des" type="date" required></label>
+<label>Próxima Preventiva<input id="prev" type="date"></label>
+<label>Responsável pela Programação<input id="resp" required></label>
+<label>Status Logístico<select id="st"></select></label>
+<label class="full">Observações<textarea id="obs" rows="2"></textarea></label>
+<div class="row full" style="margin-top:0">
+<button class="btn p" type="submit">Salvar Programação</button>
+<button class="btn" type="button" id="clr">Limpar Formulário</button>
+</div>
+<p id="msg" class="full" role="status" style="margin:0;color:var(--red)"></p>
+<div id="warn" class="full warn" role="alert" hidden><p id="warnTxt"></p><div class="row" style="margin-top:8px"><button type="button" class="btn p" id="warnGo">Inserir mesmo assim</button><button type="button" class="btn" id="warnBack">Revisar datas</button></div></div>
+</form>
+</div>
+<div class="panel">
+<h2>Programações cadastradas</h2>
+<div class="filters">
+<input id="q" type="search" placeholder="Pesquisar colaborador" aria-label="Pesquisar colaborador">
+<select id="fs" aria-label="Filtrar por Sonda"></select>
+<select id="ft" aria-label="Filtrar por Status Logístico"></select>
+</div>
+<div class="tw"><table>
+<thead><tr><th>Colaborador</th><th>Função</th><th>Sonda</th><th>Embarque</th><th>Desembarque</th><th>Preventiva</th><th>Responsável</th><th>Tipo</th><th>Status</th><th>Observações</th><th>Ações</th></tr></thead>
+<tbody id="tb"></tbody></table></div>
+</div>
+</section>
+
+<section class="tab" id="p2" role="tabpanel" aria-labelledby="t2" hidden>
+<div class="kpis">
+<div class="kpi">👷 Programados<b id="k1">0</b></div>
+<div class="kpi">📅 Preventivas Próximo Mês<b id="k2">0</b></div>
+<div class="kpi">⚠️ Pendências<b id="k3">0</b></div>
+<div class="kpi">🔄 Alterações Recentes<b id="k4">0</b></div>
+</div>
+<div class="panel">
+<h2>Programação do Mês Atual</h2>
+<div class="tw"><table>
+<thead><tr><th>Colaborador</th><th>Função</th><th>Sonda</th><th>Embarque</th><th>Desembarque</th><th>Preventiva</th><th>Status</th><th>Responsável</th><th>Encerrar embarque</th></tr></thead>
+<tbody id="cur"></tbody></table></div>
+</div>
+<div class="two" style="margin-bottom:20px">
+<div class="panel"><h2>Histórico Recente</h2><ul class="hist" id="his"></ul></div>
+<div class="panel"><h2>Programação do Próximo Mês</h2>
+<div class="tw"><table style="min-width:420px">
+<thead><tr><th>Colaborador</th><th>Sonda</th><th>Embarque Previsto</th><th>Preventiva</th></tr></thead>
+<tbody id="nxt"></tbody></table></div></div>
+</div>
+<div class="panel"><h2>Informações Logísticas</h2><div class="lg" id="lg"></div></div>
+</section>
+<section class="tab" id="p3" role="tabpanel" aria-labelledby="t3" hidden>
+<div class="panel">
+<h2 id="ctitle">Novo cadastro</h2>
+<form id="cf" class="grid" autocomplete="off">
+<label>Nome completo<input id="cn" required></label>
+<label>CPF<input id="cc" inputmode="numeric" maxlength="14" placeholder="000.000.000-00" required></label>
+<label>E-mail<input id="ce" type="email" required></label>
+<label>SISPAT<input id="cs" required></label>
+<label>Empresa cadastrada (apenas uma)<select id="cad"></select></label>
+<fieldset class="full rel"><legend>Empresas associadas e em processo de cadastro ou associação</legend><div class="grid" id="rel"></div></fieldset>
+<div class="row full" style="margin-top:0"><button class="btn p" type="submit">Salvar cadastro</button><button class="btn" type="button" id="cclr">Limpar formulário</button></div>
+<p id="cmsg" class="full" role="status" style="margin:0;color:var(--red)"></p>
+</form></div>
+<div class="panel">
+<h2>Colaboradores cadastrados</h2>
+<div class="filters">
+<input id="cq" type="search" placeholder="Pesquisar nome, CPF ou SISPAT" aria-label="Pesquisar colaborador">
+<select id="cfe" aria-label="Filtrar por empresa"></select>
+<select id="cfs" aria-label="Filtrar por situação"></select>
+</div>
+<div class="tw"><table style="min-width:700px">
+<thead><tr><th>Colaborador</th><th>CPF</th><th>E-mail</th><th>SISPAT</th><th>Empresa cadastrada</th><th>Ações</th></tr></thead>
+<tbody id="cb"></tbody></table></div>
+</div>
+<div class="ov" id="fv" hidden><div class="md" role="dialog" aria-modal="true" aria-labelledby="fn"><div class="mh"><h2 id="fn"></h2><button class="btn" id="fx" type="button">Fechar</button></div><div id="fb" class="ficha"></div><div class="row" style="margin-top:0"><button class="btn p" id="fe" type="button">Editar cadastro</button></div></div></div>
+</section>
+</main>
+
+<div class="ov" id="ov" hidden><div class="md" role="dialog" aria-modal="true" aria-labelledby="mt"><div class="mh"><h2 id="mt"></h2><button class="btn" id="mx" type="button">Fechar</button></div><div class="tw"><table style="min-width:560px"><thead><tr><th>Colaborador</th><th>Função</th><th>Sonda</th><th>Embarque</th><th>Desembarque</th><th>Responsável</th><th>Observações</th></tr></thead><tbody id="mb"></tbody></table></div></div></div>
+<script>
+const ST=["Vaga Solicitada","Em Cadastro","Aguardando Aprovação","Embarque Confirmado","Embarcado","Finalizado","Cancelado"];
+const KEY="embarques-iem-cmt-v1";
+const $=id=>document.getElementById(id);
+const iso=d=>d.toISOString().slice(0,10);
+const fd=s=>s?s.split("-").reverse().join("/"):"—";
+const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const mk=(o=0)=>{const d=new Date();return iso(new Date(d.getFullYear(),d.getMonth()+o,1)).slice(0,7)};
+const day=(m,n)=>m+"-"+String(n).padStart(2,"0");
+let D=[],editId=null,pend=null,CS=new Set();
+const tp=r=>r.tipo||(r.emb.slice(0,7)>mk(0)?"futura":"atual");
+const nm=s=>s.trim().toLowerCase();
+const ativo=r=>r.st!==ST[6];
+const ov=(a,b)=>a.emb<=b.des&&b.emb<=a.des;
+const same=(a,b)=>a.id!==b.id&&ativo(a)&&ativo(b)&&nm(a.colab)===nm(b.colab)&&ov(a,b);
+const conflicts=(r,id)=>D.filter(x=>same({...r,id:id??-1},x));
+const confSet=()=>{const s=new Set();D.forEach(a=>D.forEach(b=>{if(same(a,b))s.add(a.id)}));return s};
+const nmCell=r=>CS.has(r.id)?`<span class="conf" title="Conflito: colaborador com programações sobrepostas">⚠ ${esc(r.colab)}</span>`:esc(r.colab);
+
+function save(){try{localStorage.setItem(KEY,JSON.stringify(D))}catch(e){}}
+function load(){
+  try{const r=localStorage.getItem(KEY);if(r){D=JSON.parse(r);return}}catch(e){}
+  const c=mk(0),n=mk(1),p=mk(-1),now=Date.now();
+  D=[
+   {id:1,colab:"Carlos Mendes",func:"Mecânico",sonda:"SS-71",emb:day(c,3),des:day(c,17),prev:day(n,8),resp:"Fernanda Lima",st:ST[4],obs:"",upd:now},
+   {id:2,colab:"Ana Souza",func:"Eletricista",sonda:"SS-52",emb:day(c,10),des:day(c,24),prev:day(n,12),resp:"Fernanda Lima",st:ST[3],obs:"Aguardando voo",upd:now},
+   {id:3,colab:"Rafael Costa",func:"Instrumentista",sonda:"SS-71",emb:day(c,20),des:day(n,3),prev:day(n,20),resp:"Marcos Reis",st:ST[2],obs:"",upd:now-864e5*20},
+   {id:4,colab:"Julia Prado",func:"Técnica de Manutenção",sonda:"SS-38",emb:day(c,25),des:day(n,8),prev:day(n,25),resp:"Marcos Reis",st:ST[1],obs:"Documentação pendente",upd:now-864e5*2},
+   {id:5,colab:"Bruno Alves",func:"Soldador",sonda:"SS-52",emb:day(n,5),des:day(n,19),prev:day(n,28),resp:"Fernanda Lima",st:ST[0],obs:"",upd:now-864e5*10},
+   {id:6,colab:"Carlos Mendes",func:"Mecânico",sonda:"SS-38",emb:day(p,5),des:day(p,19),prev:day(c,22),resp:"Marcos Reis",st:ST[5],obs:"",upd:now-864e5*30},
+   {id:7,colab:"Ana Souza",func:"Eletricista",sonda:"SS-71",emb:day(p,8),des:day(p,22),prev:day(c,26),resp:"Marcos Reis",st:ST[5],obs:"",upd:now-864e5*30}
+  ];D.forEach(r=>r.tipo=r.emb.slice(0,7)>c?"futura":"atual");save();
+}
+const opt=(a,first)=>(first?`<option value="">${first}</option>`:"")+a.map(x=>`<option>${esc(x)}</option>`).join("");
+const tag=s=>`<span class="tag s${ST.indexOf(s)}">${esc(s)}</span>`;
+const empty=(n,t)=>`<tr><td colspan="${n}" class="empty">${t}</td></tr>`;
+
+function renderTable(){
+  CS=confSet();
+  const q=$("q").value.trim().toLowerCase(),fs=$("fs").value,ft=$("ft").value;
+  const sondas=[...new Set(D.map(r=>r.sonda))].sort();
+  $("fs").innerHTML=opt(sondas,"Todas as sondas");$("fs").value=sondas.includes(fs)?fs:"";
+  const rows=D.filter(r=>r.colab.toLowerCase().includes(q)&&(!$("fs").value||r.sonda===$("fs").value)&&(!ft||r.st===ft))
+    .sort((a,b)=>b.emb.localeCompare(a.emb));
+  $("tb").innerHTML=rows.length?rows.map(r=>`<tr><td>${nmCell(r)}</td><td>${esc(r.func)}</td><td>${esc(r.sonda)}</td><td>${fd(r.emb)}</td><td>${fd(r.des)}</td><td>${fd(r.prev)}</td><td>${esc(r.resp)}</td><td>${tp(r)==="futura"?"Futura":"Atual"}</td><td>${tag(r.st)}</td><td>${esc(r.obs)}</td>
+  <td style="white-space:nowrap"><button class="btn sm" data-e="${r.id}">Editar</button> <button class="btn sm d" data-x="${r.id}">Excluir</button></td></tr>`).join(""):empty(11,"Nenhuma programação encontrada. Preencha o formulário acima para cadastrar.");
+}
+function renderDash(){
+  CS=confSet();const c=mk(0),n=mk(1),act=D.filter(ativo);
+  const cur=act.filter(r=>tp(r)==="atual"&&r.st!==ST[5]).sort((a,b)=>a.emb.localeCompare(b.emb));
+  const nxt=act.filter(r=>tp(r)==="futura"&&r.st!==ST[5]).sort((a,b)=>a.emb.localeCompare(b.emb));
+  $("k1").textContent=cur.length;
+  $("k2").textContent=act.filter(r=>r.prev&&r.prev.slice(0,7)===n).length;
+  $("k3").textContent=D.filter(r=>ST.indexOf(r.st)<=2).length;
+  $("k4").textContent=D.filter(r=>Date.now()-r.upd<7*864e5).length;
+  $("cur").innerHTML=cur.length?cur.map(r=>`<tr><td>${nmCell(r)}</td><td>${esc(r.func)}</td><td>${esc(r.sonda)}</td><td>${fd(r.emb)}</td><td>${fd(r.des)}</td><td>${fd(r.prev)}</td><td>${tag(r.st)}</td><td>${esc(r.resp)}</td><td><div class="act"><button class="btn sm ok" data-fin="${r.id}">✔ Finalizar</button><button class="btn sm d" data-can="${r.id}">✖ Cancelar</button></div></td></tr>`).join(""):empty(9,"Nenhum embarque ativo neste mês.");
+  $("nxt").innerHTML=nxt.length?nxt.map(r=>`<tr><td>${nmCell(r)}</td><td>${esc(r.sonda)}</td><td>${fd(r.emb)}</td><td>${fd(r.prev)}</td></tr>`).join(""):empty(4,"Nenhum embarque previsto para o próximo mês.");
+  const today=iso(new Date()),by={};
+  D.filter(r=>r.st===ST[5]||r.st===ST[6]).forEach(r=>(by[r.colab]=by[r.colab]||[]).push(r));
+  const names=Object.keys(by).sort();
+  $("his").innerHTML=names.length?names.map(k=>{const l=by[k].sort((a,b)=>b.emb.localeCompare(a.emb)).slice(0,3);
+    return `<li><strong>${esc(k)}</strong>${l.map(r=>`<small>${esc(r.sonda)} · ${fd(r.emb)} a ${fd(r.des)} ${tag(r.st)} <button class="btn sm" data-undo="${r.id}">Desfazer</button></small>`).join("")}</li>`}).join(""):`<li class="empty">Nenhum embarque finalizado ou cancelado ainda.</li>`;
+  const show=[0,1,2,3,5,6];
+  $("lg").innerHTML=show.map(i=>{const l=D.filter(r=>r.st===ST[i]);
+    return `<button type="button" class="lc s${i}" data-s="${i}"><small>${ST[i]}</small><strong>${l.length}</strong><span class="nl">${l.slice(0,4).map(r=>`<span>${esc(r.colab)} (${esc(r.sonda)})</span>`).join("")}${l.length>4?`<span>+${l.length-4} outros</span>`:""}</span><em>Clique para ver todos</em></button>`}).join("");
+}
+function render(){renderTable();renderDash()}
+
+function clearForm(){editId=null;$("f").reset();$("st").value=ST[0];$("msg").textContent="";$("warn").hidden=true;pend=null;$("ftitle").textContent="Nova programação"}
+$("f").addEventListener("submit",e=>{
+  e.preventDefault();
+  if($("des").value<$("emb").value){$("msg").textContent="A data de desembarque deve ser igual ou posterior ao embarque.";return}
+  const r={tipo:document.querySelector("input[name=tipo]:checked").value,colab:$("colab").value.trim(),func:$("func").value.trim(),sonda:$("sonda").value.trim(),emb:$("emb").value,des:$("des").value,prev:$("prev").value,resp:$("resp").value.trim(),st:$("st").value,obs:$("obs").value.trim(),upd:Date.now()};
+  const cf=conflicts(r,editId);
+  if(cf.length){pend=r;$("warnTxt").textContent="⚠ "+r.colab+" já tem programação neste período: "+cf.map(x=>x.sonda+" ("+fd(x.emb)+" a "+fd(x.des)+")").join("; ")+". Você pode inserir mesmo assim; o nome ficará em vermelho para indicar o conflito.";$("warn").hidden=false;$("warn").scrollIntoView({block:"nearest"});return}
+  commit(r);
+});
+function commit(r){
+  if(editId){D=D.map(x=>x.id===editId?{...r,id:editId}:x)}else{D.push({...r,id:Date.now()})}
+  save();clearForm();render();
+}
+$("warnGo").onclick=()=>{if(pend)commit(pend)};
+$("warnBack").onclick=()=>{$("warn").hidden=true;pend=null};
+$("clr").onclick=clearForm;
+function setSt(id,st){const r=D.find(x=>x.id==id);if(!r)return;if(st===ST[5]||st===ST[6])r.prevSt=r.st;r.st=st;r.upd=Date.now();save();render()}
+$("cur").addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;if(b.dataset.fin)setSt(b.dataset.fin,ST[5]);if(b.dataset.can)setSt(b.dataset.can,ST[6])});
+$("his").addEventListener("click",e=>{const b=e.target.closest("button");if(!b||!b.dataset.undo)return;const r=D.find(x=>x.id==b.dataset.undo);if(r)setSt(r.id,r.prevSt&&r.prevSt!==ST[5]&&r.prevSt!==ST[6]?r.prevSt:ST[4])});
+function openModal(i){const l=D.filter(r=>r.st===ST[i]);CS=confSet();
+  $("mt").innerHTML=`${tag(ST[i])} <span>${l.length} colaborador(es)</span>`;
+  $("mb").innerHTML=l.length?l.map(r=>`<tr><td>${nmCell(r)}</td><td>${esc(r.func)}</td><td>${esc(r.sonda)}</td><td>${fd(r.emb)}</td><td>${fd(r.des)}</td><td>${esc(r.resp)}</td><td>${esc(r.obs)}</td></tr>`).join(""):empty(7,"Nenhum colaborador neste status.");
+  $("ov").hidden=false;$("mx").focus()}
+const closeModal=()=>{$("ov").hidden=true};
+$("lg").addEventListener("click",e=>{const b=e.target.closest(".lc");if(b)openModal(+b.dataset.s)});
+$("mx").onclick=closeModal;
+$("ov").addEventListener("click",e=>{if(e.target===$("ov"))closeModal()});
+document.addEventListener("keydown",e=>{if(e.key==="Escape")closeModal()});
+$("tb").addEventListener("click",e=>{
+  const b=e.target.closest("button");if(!b)return;
+  if(b.dataset.x){const r=D.find(x=>x.id==b.dataset.x);if(r&&confirm("Excluir a programação de "+r.colab+"?")){D=D.filter(x=>x.id!=b.dataset.x);save();render()}}
+  if(b.dataset.e){const r=D.find(x=>x.id==b.dataset.e);if(!r)return;editId=r.id;
+    $("colab").value=r.colab;$("func").value=r.func;$("sonda").value=r.sonda;$("emb").value=r.emb;$("des").value=r.des;$("prev").value=r.prev;$("resp").value=r.resp;$("st").value=r.st;$("obs").value=r.obs;document.querySelector("input[name=tipo][value="+tp(r)+"]").checked=true;
+    $("ftitle").textContent="Editando: "+r.colab;scrollTo({top:0,behavior:"smooth"});$("colab").focus()}
+});
+["q","fs","ft"].forEach(i=>$(i).addEventListener("input",renderTable));
+document.querySelectorAll("nav button").forEach(b=>b.onclick=()=>{
+  document.querySelectorAll("nav button").forEach(x=>x.setAttribute("aria-selected",x===b));
+  ["p1","p2","p3"].forEach((k,n)=>$(k).hidden=b.id!=="t"+(n+1));if(b.id==="t2")renderDash();
+});
+$("st").innerHTML=opt(ST);$("ft").innerHTML=opt(ST,"Todos os status");
+const EMP=["Valaris","Ventura","Foresea","Etesco","TransOcean","Seadrill","Constellation","Halliburton"];
+const LBL={cad:"Cadastrada",assoc:"Associada",pcad:"Em processo de cadastro",passoc:"Em processo de associação"};
+const CK="cadastros-iem-cmt-v1";
+let C=[],cEdit=null,armId=null,fid=null;
+const saveC=()=>{try{localStorage.setItem(CK,JSON.stringify(C))}catch(e){}};
+const loadC=()=>{try{const r=localStorage.getItem(CK);if(r)C=JSON.parse(r)}catch(e){}};
+const digits=s=>s.replace(/\D/g,"");
+const fmtCpf=s=>digits(s).slice(0,11).replace(/(\d{3})(\d)/,"$1.$2").replace(/(\d{3})(\d)/,"$1.$2").replace(/(\d{3})(\d{1,2})$/,"$1-$2");
+function cpfOk(c){c=digits(c);if(c.length!==11||/^(\d)\1+$/.test(c))return false;for(const n of[9,10]){let t=0;for(let i=0;i<n;i++)t+=c[i]*(n+1-i);if((t*10)%11%10!=c[n])return false}return true}
+const relsOf=r=>[...(r.cad?[{emp:r.cad,st:"cad"}]:[]),...Object.entries(r.rel||{}).map(([emp,st])=>({emp,st}))];
+const chip=x=>`<span class="chip k-${x.st}">${esc(x.emp)}</span>`;
+$("cad").innerHTML='<option value="">Nenhuma</option>'+EMP.map(e=>`<option>${e}</option>`).join("");
+$("rel").innerHTML=EMP.map(e=>`<label>${e}<select data-emp="${e}"><option value="">Sem vínculo</option><option value="assoc">Associada</option><option value="pcad">Em processo de cadastro</option><option value="passoc">Em processo de associação</option></select></label>`).join("");
+$("cfe").innerHTML=opt(EMP,"Todas as empresas");
+$("cfs").innerHTML='<option value="">Todas as situações</option>'+Object.entries(LBL).map(([k,v])=>`<option value="${k}">${v}</option>`).join("");
+function syncRel(){const c=$("cad").value;document.querySelectorAll("#rel select").forEach(s=>{const off=c!==""&&s.dataset.emp===c;if(off)s.value="";s.disabled=off;s.title=off?"Esta é a empresa cadastrada":""})}
+function clearC(){cEdit=null;$("cf").reset();syncRel();$("cmsg").textContent="";$("ctitle").textContent="Novo cadastro"}
+function renderC(){
+  const q=$("cq").value.trim().toLowerCase(),qd=digits(q),fe=$("cfe").value,fs=$("cfs").value;
+  const rows=C.filter(r=>(!q||r.nome.toLowerCase().includes(q)||(qd&&digits(r.cpf).includes(qd))||r.sispat.toLowerCase().includes(q))&&((!fe&&!fs)||relsOf(r).some(x=>(!fe||x.emp===fe)&&(!fs||x.st===fs)))).sort((a,b)=>a.nome.localeCompare(b.nome));
+  $("cb").innerHTML=rows.length?rows.map(r=>`<tr><td><button class="link" data-f="${r.id}">${esc(r.nome)}</button></td><td>${esc(r.cpf)}</td><td>${esc(r.email)}</td><td>${esc(r.sispat)}</td><td>${r.cad?`<span class="chip k-cad">${esc(r.cad)}</span>`:"—"}</td><td style="white-space:nowrap"><button class="btn sm" data-ce="${r.id}">Editar</button> <button class="btn sm d" data-cx="${r.id}">${armId==r.id?"Confirmar exclusão":"Excluir"}</button></td></tr>`).join(""):empty(6,C.length?"Nenhum colaborador encontrado com esses filtros.":"Nenhum colaborador cadastrado. Preencha o formulário acima.");
+}
+function ficha(id){const r=C.find(x=>x.id==id);if(!r)return;fid=r.id;$("fn").textContent=r.nome;
+  const g=st=>relsOf(r).filter(x=>x.st===st).map(chip).join("")||"—";
+  $("fb").innerHTML=`<dl><dt>CPF</dt><dd>${esc(r.cpf)}</dd><dt>E-mail</dt><dd>${esc(r.email)}</dd><dt>SISPAT</dt><dd>${esc(r.sispat)}</dd><dt>Cadastrado em</dt><dd>${g("cad")}</dd><dt>Associado em</dt><dd>${g("assoc")}</dd><dt>Em processo de cadastro</dt><dd>${g("pcad")}</dd><dt>Em processo de associação</dt><dd>${g("passoc")}</dd></dl>`;
+  $("fv").hidden=false;$("fx").focus()}
+function editC(id){const r=C.find(x=>x.id==id);if(!r)return;cEdit=r.id;
+  $("cn").value=r.nome;$("cc").value=r.cpf;$("ce").value=r.email;$("cs").value=r.sispat;$("cad").value=r.cad;
+  document.querySelectorAll("#rel select").forEach(s=>s.value=(r.rel||{})[s.dataset.emp]||"");syncRel();
+  $("ctitle").textContent="Editando: "+r.nome;$("fv").hidden=true;scrollTo({top:0,behavior:"smooth"});$("cn").focus()}
+$("cad").addEventListener("change",syncRel);
+$("cc").addEventListener("input",()=>{$("cc").value=fmtCpf($("cc").value)});
+$("cclr").onclick=clearC;
+$("cf").addEventListener("submit",e=>{e.preventDefault();
+  const nome=$("cn").value.trim().replace(/\s+/g," "),cpf=fmtCpf($("cc").value),m=$("cmsg");
+  if(nome.split(" ").length<2){m.textContent="Informe o nome completo (nome e sobrenome).";return}
+  if(!cpfOk(cpf)){m.textContent="CPF inválido. Confira os 11 dígitos.";return}
+  if(C.some(x=>x.id!==cEdit&&digits(x.cpf)===digits(cpf))){m.textContent="Já existe um colaborador com este CPF.";return}
+  const rel={};document.querySelectorAll("#rel select").forEach(s=>{if(s.value)rel[s.dataset.emp]=s.value});
+  const r={nome,cpf,email:$("ce").value.trim(),sispat:$("cs").value.trim(),cad:$("cad").value,rel,upd:Date.now()};
+  if(cEdit)C=C.map(x=>x.id===cEdit?{...r,id:cEdit}:x);else C.push({...r,id:Date.now()});
+  saveC();clearC();renderC();
+});
+$("cb").addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;
+  if(b.dataset.f)ficha(b.dataset.f);
+  if(b.dataset.ce)editC(b.dataset.ce);
+  if(b.dataset.cx){const id=b.dataset.cx;
+    if(armId==id){C=C.filter(x=>x.id!=id);armId=null;saveC()}else{armId=id;setTimeout(()=>{if(armId==id){armId=null;renderC()}},4000)}
+    renderC()}
+});
+["cq","cfe","cfs"].forEach(i=>$(i).addEventListener("input",renderC));
+$("fe").onclick=()=>editC(fid);
+$("fx").onclick=()=>{$("fv").hidden=true};
+$("fv").addEventListener("click",e=>{if(e.target===$("fv"))$("fv").hidden=true});
+document.addEventListener("keydown",e=>{if(e.key==="Escape")$("fv").hidden=true});
+load();render();loadC();renderC();syncRel();
+</script>
+</body>
+</html>
