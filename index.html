@@ -87,6 +87,9 @@ fieldset.rel legend{font-weight:600;font-size:13px;color:var(--mut);padding:0 6p
 .ficha dl{display:grid;grid-template-columns:210px 1fr;gap:10px 12px;margin:0 0 14px}
 .ficha dt{color:var(--mut);font-weight:600}.ficha dd{margin:0}
 @media(max-width:520px){.ficha dl{grid-template-columns:1fr;gap:2px}.ficha dd{margin-bottom:8px}}
+.bar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;background:var(--card);border:1px solid var(--line);border-left:5px solid var(--ac);border-radius:10px;padding:10px 14px;margin-bottom:16px}
+.bar #ultx{flex:1 1 280px;font-size:14px}
+.mode{font-size:13px;font-weight:600;color:var(--grn)}.mode.bad{color:var(--red)}.mode.loc{color:var(--mut)}
 </style>
 </head>
 <body>
@@ -100,6 +103,7 @@ fieldset.rel legend{font-weight:600;font-size:13px;color:var(--mut);padding:0 6p
 </nav></div></header>
 
 <main class="wrap">
+<div class="bar"><span id="ultx" role="status">Carregando…</span><span class="mode loc" id="mode">● Conectando…</span><button class="btn sm" id="hb" type="button">Histórico de alterações</button><button class="btn sm p" id="imp" type="button" hidden></button></div>
 <section class="tab" id="p1" role="tabpanel" aria-labelledby="t1">
 <div class="panel">
 <h2 id="ftitle">Nova programação</h2>
@@ -189,6 +193,7 @@ fieldset.rel legend{font-weight:600;font-size:13px;color:var(--mut);padding:0 6p
 </main>
 
 <div class="ov" id="ov" hidden><div class="md" role="dialog" aria-modal="true" aria-labelledby="mt"><div class="mh"><h2 id="mt"></h2><button class="btn" id="mx" type="button">Fechar</button></div><div class="tw"><table style="min-width:560px"><thead><tr><th>Colaborador</th><th>Função</th><th>Sonda</th><th>Embarque</th><th>Desembarque</th><th>Responsável</th><th>Observações</th></tr></thead><tbody id="mb"></tbody></table></div></div></div>
+<div class="ov" id="hv" hidden><div class="md" role="dialog" aria-modal="true" aria-labelledby="ht"><div class="mh"><h2 id="ht">Histórico de alterações</h2><button class="btn" id="hx" type="button">Fechar</button></div><ul class="hist" id="hl"></ul></div></div>
 <script>
 const ST=["Vaga Solicitada","Em Cadastro","Aguardando Aprovação","Embarque Confirmado","Embarcado","Finalizado","Cancelado"];
 const KEY="embarques-iem-cmt-v1";
@@ -198,7 +203,7 @@ const fd=s=>s?s.split("-").reverse().join("/"):"—";
 const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const mk=(o=0)=>{const d=new Date();return iso(new Date(d.getFullYear(),d.getMonth()+o,1)).slice(0,7)};
 const day=(m,n)=>m+"-"+String(n).padStart(2,"0");
-let D=[],editId=null,pend=null,CS=new Set();
+let D=[],editId=null,pend=null,CS=new Set(),armX=null,DBX=null,USR=null,LOG=[],NAMES={},IMP=null,okD=false,okC=false;
 const tp=r=>r.tipo||(r.emb.slice(0,7)>mk(0)?"futura":"atual");
 const nm=s=>s.trim().toLowerCase();
 const ativo=r=>r.st!==ST[6];
@@ -234,7 +239,7 @@ function renderTable(){
   const rows=D.filter(r=>r.colab.toLowerCase().includes(q)&&(!$("fs").value||r.sonda===$("fs").value)&&(!ft||r.st===ft))
     .sort((a,b)=>b.emb.localeCompare(a.emb));
   $("tb").innerHTML=rows.length?rows.map(r=>`<tr><td>${nmCell(r)}</td><td>${esc(r.func)}</td><td>${esc(r.sonda)}</td><td>${fd(r.emb)}</td><td>${fd(r.des)}</td><td>${fd(r.prev)}</td><td>${esc(r.resp)}</td><td>${tp(r)==="futura"?"Futura":"Atual"}</td><td>${tag(r.st)}</td><td>${esc(r.obs)}</td>
-  <td style="white-space:nowrap"><button class="btn sm" data-e="${r.id}">Editar</button> <button class="btn sm d" data-x="${r.id}">Excluir</button></td></tr>`).join(""):empty(11,"Nenhuma programação encontrada. Preencha o formulário acima para cadastrar.");
+  <td style="white-space:nowrap"><button class="btn sm" data-e="${r.id}">Editar</button> <button class="btn sm d" data-x="${r.id}">${armX==r.id?"Confirmar exclusão":"Excluir"}</button></td></tr>`).join(""):empty(11,"Nenhuma programação encontrada. Preencha o formulário acima para cadastrar.");
 }
 function renderDash(){
   CS=confSet();const c=mk(0),n=mk(1),act=D.filter(ativo);
@@ -267,13 +272,14 @@ $("f").addEventListener("submit",e=>{
   commit(r);
 });
 function commit(r){
-  if(editId){D=D.map(x=>x.id===editId?{...r,id:editId}:x)}else{D.push({...r,id:Date.now()})}
-  save();clearForm();render();
+  const rec=editId?{...r,id:editId}:{...r,id:Date.now()};
+  put("embarques",rec,(editId?"Programação editada: ":"Programação criada: ")+r.colab+" ("+r.sonda+")");
+  clearForm();
 }
 $("warnGo").onclick=()=>{if(pend)commit(pend)};
 $("warnBack").onclick=()=>{$("warn").hidden=true;pend=null};
 $("clr").onclick=clearForm;
-function setSt(id,st){const r=D.find(x=>x.id==id);if(!r)return;if(st===ST[5]||st===ST[6])r.prevSt=r.st;r.st=st;r.upd=Date.now();save();render()}
+function setSt(id,st){const o=D.find(x=>x.id==id);if(!o)return;const r={...o};if(st===ST[5]||st===ST[6])r.prevSt=o.st;r.st=st;r.upd=Date.now();put("embarques",r,"Status alterado para "+st+": "+r.colab+" ("+r.sonda+")")}
 $("cur").addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;if(b.dataset.fin)setSt(b.dataset.fin,ST[5]);if(b.dataset.can)setSt(b.dataset.can,ST[6])});
 $("his").addEventListener("click",e=>{const b=e.target.closest("button");if(!b||!b.dataset.undo)return;const r=D.find(x=>x.id==b.dataset.undo);if(r)setSt(r.id,r.prevSt&&r.prevSt!==ST[5]&&r.prevSt!==ST[6]?r.prevSt:ST[4])});
 function openModal(i){const l=D.filter(r=>r.st===ST[i]);CS=confSet();
@@ -287,7 +293,7 @@ $("ov").addEventListener("click",e=>{if(e.target===$("ov"))closeModal()});
 document.addEventListener("keydown",e=>{if(e.key==="Escape")closeModal()});
 $("tb").addEventListener("click",e=>{
   const b=e.target.closest("button");if(!b)return;
-  if(b.dataset.x){const r=D.find(x=>x.id==b.dataset.x);if(r&&confirm("Excluir a programação de "+r.colab+"?")){D=D.filter(x=>x.id!=b.dataset.x);save();render()}}
+  if(b.dataset.x){const r=D.find(x=>x.id==b.dataset.x);if(!r)return;if(armX==r.id){armX=null;del("embarques",r.id,"Programação excluída: "+r.colab+" ("+r.sonda+")")}else{armX=r.id;renderTable();setTimeout(()=>{if(armX==r.id){armX=null;renderTable()}},4000)}}
   if(b.dataset.e){const r=D.find(x=>x.id==b.dataset.e);if(!r)return;editId=r.id;
     $("colab").value=r.colab;$("func").value=r.func;$("sonda").value=r.sonda;$("emb").value=r.emb;$("des").value=r.des;$("prev").value=r.prev;$("resp").value=r.resp;$("st").value=r.st;$("obs").value=r.obs;document.querySelector("input[name=tipo][value="+tp(r)+"]").checked=true;
     $("ftitle").textContent="Editando: "+r.colab;scrollTo({top:0,behavior:"smooth"});$("colab").focus()}
@@ -338,14 +344,15 @@ $("cf").addEventListener("submit",e=>{e.preventDefault();
   if(C.some(x=>x.id!==cEdit&&digits(x.cpf)===digits(cpf))){m.textContent="Já existe um colaborador com este CPF.";return}
   const rel={};document.querySelectorAll("#rel select").forEach(s=>{if(s.value)rel[s.dataset.emp]=s.value});
   const r={nome,cpf,email:$("ce").value.trim(),sispat:$("cs").value.trim(),cad:$("cad").value,rel,upd:Date.now()};
-  if(cEdit)C=C.map(x=>x.id===cEdit?{...r,id:cEdit}:x);else C.push({...r,id:Date.now()});
-  saveC();clearC();renderC();
+  const rec=cEdit?{...r,id:cEdit}:{...r,id:Date.now()};
+  put("cadastros",rec,(cEdit?"Cadastro editado: ":"Cadastro criado: ")+nome);
+  clearC();
 });
 $("cb").addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;
   if(b.dataset.f)ficha(b.dataset.f);
   if(b.dataset.ce)editC(b.dataset.ce);
   if(b.dataset.cx){const id=b.dataset.cx;
-    if(armId==id){C=C.filter(x=>x.id!=id);armId=null;saveC()}else{armId=id;setTimeout(()=>{if(armId==id){armId=null;renderC()}},4000)}
+    if(armId==id){const o=C.find(x=>x.id==id);armId=null;if(o)del("cadastros",o.id,"Cadastro excluído: "+o.nome)}else{armId=id;setTimeout(()=>{if(armId==id){armId=null;renderC()}},4000)}
     renderC()}
 });
 ["cq","cfe","cfs"].forEach(i=>$(i).addEventListener("input",renderC));
@@ -353,7 +360,56 @@ $("fe").onclick=()=>editC(fid);
 $("fx").onclick=()=>{$("fv").hidden=true};
 $("fv").addEventListener("click",e=>{if(e.target===$("fv"))$("fv").hidden=true});
 document.addEventListener("keydown",e=>{if(e.key==="Escape")$("fv").hidden=true});
-load();render();loadC();renderC();syncRel();
+const LK="log-iem-cmt-v1";
+const stamp=t=>new Date(t).toLocaleString("pt-BR",{dateStyle:"short",timeStyle:"short"});
+function setMode(m){const e=$("mode");e.className="mode"+(m==="shared"?"":" loc");e.textContent=m==="shared"?"● Dados compartilhados entre usuários":"● Salvo apenas neste navegador"}
+function fail(e){const m=$("mode");m.className="mode bad";m.textContent=e&&e.code==="invalid_argument"?"⚠ Sem permissão para salvar (acesso somente leitura)":"⚠ Falha ao salvar ou sincronizar. Tente novamente."}
+async function who(ids){const need=ids.filter(i=>i&&!NAMES[i]);if(need.length&&USR){try{const p=await USR.profiles(need);need.forEach(i=>NAMES[i]=(p[i]&&p[i].name)||"")}catch(e){}}return u=>NAMES[u]||"Usuário"}
+async function renderLog(){
+  const nm=await who([...new Set(LOG.map(x=>x.u))]);
+  $("ultx").textContent=LOG.length?"Última alteração: "+LOG[0].x+" — por "+nm(LOG[0].u)+", "+stamp(LOG[0].t):"Nenhuma alteração registrada ainda.";
+  $("hl").innerHTML=LOG.length?LOG.map(x=>`<li>${esc(x.x)}<small>${esc(nm(x.u))} · ${stamp(x.t)}</small></li>`).join(""):'<li class="empty">Nenhuma alteração registrada ainda.</li>';
+}
+async function log(txt){
+  let uid=null;try{uid=DBX&&USR?await USR.id():null}catch(e){}
+  LOG=[{t:Date.now(),u:uid,x:txt},...LOG].slice(0,100);
+  if(DBX)await DBX.doc("meta/log").set({itens:LOG});else{try{localStorage.setItem(LK,JSON.stringify(LOG))}catch(e){}renderLog()}
+}
+async function put(kind,rec,txt){
+  const {id,...data}=rec;
+  if(DBX){try{await DBX.doc(kind+"/"+id).set(JSON.parse(JSON.stringify(data)));if(txt)await log(txt);setMode("shared")}catch(e){fail(e)}return}
+  const a=kind==="embarques"?D:C,i=a.findIndex(x=>x.id==id);if(i<0)a.push(rec);else a[i]=rec;
+  if(kind==="embarques"){save();render()}else{saveC();renderC()}
+  if(txt)await log(txt);
+}
+async function del(kind,id,txt){
+  if(DBX){try{await DBX.doc(kind+"/"+id).delete();await log(txt);setMode("shared")}catch(e){fail(e)}return}
+  if(kind==="embarques"){D=D.filter(x=>x.id!=id);save();render()}else{C=C.filter(x=>x.id!=id);saveC();renderC()}
+  await log(txt);
+}
+function chk(){
+  if(!okD||!okC||D.length||C.length){$("imp").hidden=true;return}
+  let d=[],c=[];try{d=JSON.parse(localStorage.getItem(KEY)||"[]");c=JSON.parse(localStorage.getItem(CK)||"[]")}catch(e){}
+  const n=d.length+c.length;IMP={d,c,n};$("imp").hidden=!n;$("imp").textContent="Importar "+n+" registros salvos neste navegador";
+}
+$("imp").onclick=async()=>{if(!IMP)return;$("imp").disabled=true;
+  for(const r of IMP.d)await put("embarques",r,null);
+  for(const r of IMP.c)await put("cadastros",r,null);
+  await log("Dados importados do navegador ("+IMP.n+" registros)");$("imp").hidden=true;$("imp").disabled=false};
+$("hb").onclick=()=>{$("hv").hidden=false;$("hx").focus()};
+$("hx").onclick=()=>{$("hv").hidden=true};
+$("hv").addEventListener("click",e=>{if(e.target===$("hv"))$("hv").hidden=true});
+document.addEventListener("keydown",e=>{if(e.key==="Escape")$("hv").hidden=true});
+async function init(){
+  let db=null;try{db=window.claude?await claude.use("db"):null}catch(e){}
+  if(!db){load();loadC();try{LOG=JSON.parse(localStorage.getItem(LK)||"[]")}catch(e){}render();renderC();renderLog();setMode("local");return}
+  DBX=db;try{USR=await claude.use("user")}catch(e){}
+  setMode("shared");
+  db.collection("embarques").onSnapshot(s=>{D=s.docs.map(d=>({...d.data(),id:d.id}));if(!s.metadata.fromCache)okD=true;render();chk()},fail);
+  db.collection("cadastros").onSnapshot(s=>{C=s.docs.map(d=>({...d.data(),id:d.id}));if(!s.metadata.fromCache)okC=true;renderC();chk()},fail);
+  db.doc("meta/log").onSnapshot(s=>{LOG=s.exists?(s.data().itens||[]):[];renderLog()},fail);
+}
+syncRel();render();renderC();init();
 </script>
 </body>
 </html>
