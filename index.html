@@ -92,6 +92,10 @@ fieldset.rel legend{font-weight:600;font-size:13px;color:var(--mut);padding:0 6p
 .mode{font-size:13px;font-weight:600;color:var(--grn)}.mode.bad{color:var(--red)}.mode.loc{color:var(--mut)}
 .bar input{width:auto;flex:0 1 210px}
 .mode.warn{color:var(--org)}
+.ie{padding:4px 6px;font-size:13px;min-width:90px;width:100%}
+td input[data-f=obs]{min-width:190px}td input[data-f=req]{min-width:90px}
+.filters.f4{grid-template-columns:2fr 1fr 1fr 1fr}
+@media(max-width:640px){.filters.f4{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -102,6 +106,7 @@ fieldset.rel legend{font-weight:600;font-size:13px;color:var(--mut);padding:0 6p
 <button role="tab" id="t1" aria-selected="true" aria-controls="p1">01 - Cadastro de Programações</button>
 <button role="tab" id="t2" aria-selected="false" aria-controls="p2">02 - Dashboard Operacional</button>
 <button role="tab" id="t3" aria-selected="false" aria-controls="p3">03 - Controle de Cadastros</button>
+<button role="tab" id="t4" aria-selected="false" aria-controls="p4">04 - Cadastros em Clientes</button>
 </nav></div></header>
 
 <main class="wrap">
@@ -190,6 +195,37 @@ fieldset.rel legend{font-weight:600;font-size:13px;color:var(--mut);padding:0 6p
 <tbody id="cb"></tbody></table></div>
 </div>
 <div class="ov" id="fv" hidden><div class="md" role="dialog" aria-modal="true" aria-labelledby="fn"><div class="mh"><h2 id="fn"></h2><button class="btn" id="fx" type="button">Fechar</button></div><div id="fb" class="ficha"></div><div class="row" style="margin-top:0"><button class="btn p" id="fe" type="button">Editar cadastro</button></div></div></div>
+</section>
+<section class="tab" id="p4" role="tabpanel" aria-labelledby="t4" hidden>
+<div class="panel">
+<h2 id="ktitle">Novo cadastro em cliente</h2>
+<form id="kf" class="grid" autocomplete="off">
+<label>Cliente<select id="kc" required></select></label>
+<label>Sonda<input id="ks" required></label>
+<label>Nome do funcionário<input id="kn" placeholder="Nome completo" required></label>
+<label>Função<select id="kfu" required></select></label>
+<label>Requisição (número)<input id="kr" type="number" min="0" inputmode="numeric"></label>
+<label>Status<select id="kst" required></select></label>
+<label>Plataforma<select id="kp"></select></label>
+<label>Qual ambiente<select id="ka"></select></label>
+<label class="full">Observação<textarea id="ko" rows="2"></textarea></label>
+<div class="row full" style="margin-top:0"><button class="btn p" type="submit">Salvar cadastro</button><button class="btn" type="button" id="kclr">Limpar formulário</button></div>
+<p id="kmsg" class="full" role="status" style="margin:0;color:var(--red)"></p>
+</form>
+<p style="margin:10px 0 0;color:var(--mut);font-size:13px">Para o mesmo colaborador estar em mais de um cliente ou plataforma, cadastre um registro para cada um. Na tabela, Requisição, Status, Plataforma, Ambiente e Observação podem ser alterados direto na linha, e a data de última atualização muda sozinha.</p>
+</div>
+<div class="panel">
+<h2>Cadastros em clientes</h2>
+<div class="filters f4">
+<input id="kq" type="search" placeholder="Pesquisar nome, sonda ou requisição" aria-label="Pesquisar">
+<select id="kfc" aria-label="Filtrar por cliente"></select>
+<select id="kfs" aria-label="Filtrar por status"></select>
+<select id="kfp" aria-label="Filtrar por plataforma"></select>
+</div>
+<div class="tw"><table style="min-width:1150px">
+<thead><tr><th>Cliente</th><th>Sonda</th><th>Nome do funcionário</th><th>Função</th><th>Requisição</th><th>Status</th><th>Plataforma</th><th>Ambiente</th><th>Última atualização</th><th>Observação</th><th>Ações</th></tr></thead>
+<tbody id="kb"></tbody></table></div>
+</div>
 </section>
 </main>
 
@@ -313,7 +349,7 @@ $("tb").addEventListener("click",e=>{
 document.querySelectorAll("nav button").forEach(b=>b.onclick=()=>{
   if(b.id==="t3"&&!UNL){askPw(()=>b.click());return}
   document.querySelectorAll("nav button").forEach(x=>x.setAttribute("aria-selected",x===b));
-  ["p1","p2","p3"].forEach((k,n)=>$(k).hidden=b.id!=="t"+(n+1));if(b.id==="t2")renderDash();
+  ["p1","p2","p3","p4"].forEach((k,n)=>$(k).hidden=b.id!=="t"+(n+1));if(b.id==="t2")renderDash();
 });
 $("st").innerHTML=opt(ST);$("ft").innerHTML=opt(ST,"Todos os status");
 const EMP=["Valaris","Ventura","Foresea","Etesco","TransOcean","Seadrill","Constellation","Halliburton"];
@@ -386,24 +422,25 @@ async function put(kind,rec,txt){
   const {id,...data}=rec;
   if(REST){try{await rq(kind+"/"+id,"PUT",JSON.parse(JSON.stringify(data)));if(txt)await log(txt);if(txt!==null)await pull()}catch(e){fail(e)}return}
   if(DBX){try{await DBX.doc(kind+"/"+id).set(JSON.parse(JSON.stringify(data)));if(txt)await log(txt);setMode("shared")}catch(e){fail(e)}return}
-  const a=kind==="embarques"?D:C,i=a.findIndex(x=>x.id==id);if(i<0)a.push(rec);else a[i]=rec;
-  if(kind==="embarques"){save();render()}else{saveC();renderC()}
+  const a=kind==="embarques"?D:kind==="cadastros"?C:K,i=a.findIndex(x=>x.id==id);if(i<0)a.push(rec);else a[i]=rec;
+  if(kind==="embarques"){save();render()}else if(kind==="cadastros"){saveC();renderC()}else{saveK();renderK()}
   markDirty();if(txt)await log(txt);
 }
 async function del(kind,id,txt){
   if(REST){try{await rq(kind+"/"+id,"DELETE");await log(txt);await pull()}catch(e){fail(e)}return}
   if(DBX){try{await DBX.doc(kind+"/"+id).delete();await log(txt);setMode("shared")}catch(e){fail(e)}return}
-  if(kind==="embarques"){D=D.filter(x=>x.id!=id);save();render()}else{C=C.filter(x=>x.id!=id);saveC();renderC()}
+  if(kind==="embarques"){D=D.filter(x=>x.id!=id);save();render()}else if(kind==="cadastros"){C=C.filter(x=>x.id!=id);saveC();renderC()}else{K=K.filter(x=>x.id!=id);saveK();renderK()}
   markDirty();await log(txt);
 }
 function chk(){
-  if(!okD||!okC||D.length||C.length){$("imp").hidden=true;return}
-  let d=[],c=[];try{d=JSON.parse(localStorage.getItem(KEY)||"[]");c=JSON.parse(localStorage.getItem(CK)||"[]")}catch(e){}
-  const n=d.length+c.length;IMP={d,c,n};$("imp").hidden=!n;$("imp").textContent="Importar "+n+" registros salvos neste navegador";
+  if(!okD||!okC||D.length||C.length||K.length){$("imp").hidden=true;return}
+  let d=[],c=[],k=[];try{d=JSON.parse(localStorage.getItem(KEY)||"[]");c=JSON.parse(localStorage.getItem(CK)||"[]");k=JSON.parse(localStorage.getItem(KK)||"[]")}catch(e){}
+  const n=d.length+c.length+k.length;IMP={d,c,k,n};$("imp").hidden=!n;$("imp").textContent="Importar "+n+" registros salvos neste navegador";
 }
 $("imp").onclick=async()=>{if(!IMP)return;$("imp").disabled=true;
   for(const r of IMP.d)await put("embarques",r,null);
   for(const r of IMP.c){const {cpf,email,...q}=r;await put("cadastros",q,null)}
+  for(const r of IMP.k||[])await put("clientes",r,null);
   await log("Dados importados do navegador ("+IMP.n+" registros)");if(REST)await pull();$("imp").hidden=true;$("imp").disabled=false};
 $("hb").onclick=()=>{$("hv").hidden=false;$("hx").focus()};
 $("hx").onclick=()=>{$("hv").hidden=true};
@@ -426,18 +463,19 @@ const toList=o=>!o?[]:(Array.isArray(o)?o.map((v,i)=>v&&{...v,id:String(i)}):Obj
 async function pull(){
   try{const d=(await rq("","GET"))||{};setMode("shared");
     const sig=JSON.stringify(d);if(sig===LAST)return;LAST=sig;
-    D=toList(d.embarques);C=toList(d.cadastros);LOG=(d.meta&&d.meta.log&&d.meta.log.itens)||[];
-    okD=okC=true;render();renderC();renderLog();chk();
+    D=toList(d.embarques);C=toList(d.cadastros);K=toList(d.clientes);LOG=(d.meta&&d.meta.log&&d.meta.log.itens)||[];
+    okD=okC=true;render();renderC();renderK();renderLog();chk();
   }catch(e){fail(e)}
 }
 async function init(){
   if(REST){setMode("shared");await pull();setInterval(pull,8000);document.addEventListener("visibilitychange",()=>{if(!document.hidden)pull()});return}
   let db=null;try{db=window.claude?await claude.use("db"):null}catch(e){}
-  if(!db){load();loadC();C=C.map(({cpf,email,...x})=>x);saveC();try{LOG=JSON.parse(localStorage.getItem(LK)||"[]")}catch(e){}render();renderC();renderLog();setMode("local");ghInit();return}
+  if(!db){load();loadC();loadK();C=C.map(({cpf,email,...x})=>x);saveC();try{LOG=JSON.parse(localStorage.getItem(LK)||"[]")}catch(e){}render();renderC();renderLog();setMode("local");ghInit();return}
   DBX=db;try{USR=await claude.use("user")}catch(e){}
   setMode("shared");
   db.collection("embarques").onSnapshot(s=>{D=s.docs.map(d=>({...d.data(),id:d.id}));if(!s.metadata.fromCache)okD=true;render();chk()},fail);
   db.collection("cadastros").onSnapshot(s=>{C=s.docs.map(d=>({...d.data(),id:d.id}));if(!s.metadata.fromCache)okC=true;renderC();chk()},fail);
+  db.collection("clientes").onSnapshot(s=>{K=s.docs.map(d=>({...d.data(),id:d.id}));renderK()},fail);
   db.doc("meta/log").onSnapshot(s=>{LOG=s.exists?(s.data().itens||[]):[];renderLog()},fail);
 }
 const PW_HASH="4bb082be1188a4ae677bf16f4562cc0ec56a50bcc95542975b1ac8e7fb8e96c4";
@@ -451,6 +489,50 @@ $("pf").addEventListener("submit",async e=>{e.preventDefault();
 $("pc").onclick=()=>{$("pv").hidden=true};
 $("pv").addEventListener("click",e=>{if(e.target===$("pv"))$("pv").hidden=true});
 document.addEventListener("keydown",e=>{if(e.key==="Escape")$("pv").hidden=true});
+// ===== ABA 04: CADASTROS EM CLIENTES =====
+const FUN=["Técnico Eletrônico","Técnico Mecânico"],STK=["Em validação DRAKE","DRAKE","PEOPLELOG","ATIVO","CADASTRAR"],PLT=["DRAKE","PEOPLELOG"],AMB=["Halliburton","Halliburton produtos LTDA","Halliburton produtos 2"];
+const LBLF={req:"Requisição",status:"Status",plat:"Plataforma",amb:"Ambiente",obs:"Observação"};
+const KK="clientes-iem-cmt-v1";
+let K=[],kEdit=null,kArm=null,kDefer=false;
+const saveK=()=>{try{localStorage.setItem(KK,JSON.stringify(K))}catch(e){}};
+const loadK=()=>{try{K=JSON.parse(localStorage.getItem(KK)||"[]")}catch(e){}};
+$("kc").innerHTML=opt(EMP,"Selecione o cliente");$("kfu").innerHTML=opt(FUN);$("kst").innerHTML=opt(STK);
+$("kp").innerHTML=opt(PLT,"—");$("ka").innerHTML=opt(AMB,"—");
+$("kfc").innerHTML=opt(EMP,"Todos os clientes");$("kfs").innerHTML=opt(STK,"Todos os status");$("kfp").innerHTML=opt(PLT,"Todas as plataformas");
+const ksel=(a,v,f,id,blank)=>`<select class="ie" data-k="${id}" data-f="${f}" aria-label="${LBLF[f]}">${blank?'<option value="">—</option>':""}${a.map(x=>`<option${x===v?" selected":""}>${esc(x)}</option>`).join("")}</select>`;
+function renderK(){
+  const ac=document.activeElement;if(ac&&ac.tagName==="INPUT"&&ac.closest&&ac.closest("#kb")){kDefer=true;return}kDefer=false;
+  const q=$("kq").value.trim().toLowerCase(),fc=$("kfc").value,fs=$("kfs").value,fp=$("kfp").value;
+  const rows=K.filter(r=>(!q||r.nome.toLowerCase().includes(q)||(r.sonda||"").toLowerCase().includes(q)||String(r.req||"").includes(q))&&(!fc||r.cliente===fc)&&(!fs||r.status===fs)&&(!fp||r.plat===fp)).sort((x,y)=>x.nome.localeCompare(y.nome)||x.cliente.localeCompare(y.cliente));
+  $("kb").innerHTML=rows.length?rows.map(r=>`<tr><td>${esc(r.cliente)}</td><td>${esc(r.sonda)}</td><td><strong>${esc(r.nome)}</strong></td><td>${esc(r.funcao)}</td><td><input class="ie" type="number" min="0" data-k="${r.id}" data-f="req" value="${esc(r.req)}" aria-label="Requisição"></td><td>${ksel(STK,r.status,"status",r.id)}</td><td>${ksel(PLT,r.plat,"plat",r.id,1)}</td><td>${ksel(AMB,r.amb,"amb",r.id,1)}</td><td title="${r.upd?stamp(r.upd):""}">${r.upd?new Date(r.upd).toLocaleDateString("pt-BR"):"—"}</td><td><input class="ie" data-k="${r.id}" data-f="obs" value="${esc(r.obs)}" aria-label="Observação"></td><td style="white-space:nowrap"><button class="btn sm" data-ke="${r.id}">Editar</button> <button class="btn sm d" data-kx="${r.id}">${kArm==r.id?"Confirmar exclusão":"Excluir"}</button></td></tr>`).join(""):empty(11,K.length?"Nenhum registro encontrado com esses filtros.":"Nenhum cadastro em cliente ainda. Preencha o formulário acima.");
+}
+function clearK(){kEdit=null;$("kf").reset();$("kmsg").textContent="";$("ktitle").textContent="Novo cadastro em cliente"}
+function editK(id){const r=K.find(x=>x.id==id);if(!r)return;kEdit=r.id;
+  $("kc").value=r.cliente;$("ks").value=r.sonda;$("kn").value=r.nome;$("kfu").value=r.funcao;$("kr").value=r.req||"";$("kst").value=r.status;$("kp").value=r.plat||"";$("ka").value=r.amb||"";$("ko").value=r.obs||"";
+  $("ktitle").textContent="Editando: "+r.nome+" ("+r.cliente+")";scrollTo({top:0,behavior:"smooth"});$("kn").focus()}
+$("kclr").onclick=clearK;
+$("kf").addEventListener("submit",e=>{e.preventDefault();
+  const nome=$("kn").value.trim().replace(/\s+/g," "),m=$("kmsg");
+  if(nome.split(" ").length<2){m.textContent="Informe o nome completo (nome e sobrenome).";return}
+  const r={cliente:$("kc").value,sonda:$("ks").value.trim(),nome,funcao:$("kfu").value,req:$("kr").value.trim(),status:$("kst").value,plat:$("kp").value,amb:$("ka").value,obs:$("ko").value.trim(),upd:Date.now()};
+  const key=x=>[nm(x.nome),x.cliente,x.plat||"",x.amb||""].join("|");
+  if(K.some(x=>x.id!==kEdit&&key(x)===key(r))){m.textContent="Este colaborador já está cadastrado neste cliente com a mesma plataforma e ambiente. Altere o registro existente na tabela.";return}
+  const rec=kEdit?{...r,id:kEdit}:{...r,id:Date.now()};
+  put("clientes",rec,(kEdit?"Cadastro em cliente editado: ":"Cadastro em cliente criado: ")+nome+" ("+r.cliente+")");
+  clearK();
+});
+$("kb").addEventListener("change",e=>{const t=e.target,f=t.dataset.f;if(!f)return;
+  const o=K.find(x=>x.id==t.dataset.k);if(!o||(o[f]||"")===t.value)return;
+  put("clientes",{...o,[f]:t.value,upd:Date.now()},o.nome+" ("+o.cliente+"): "+LBLF[f]+" alterado para "+(t.value.slice(0,40)||"vazio"))});
+$("kb").addEventListener("focusout",()=>{if(kDefer)setTimeout(renderK,60)});
+$("kb").addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;
+  if(b.dataset.ke)editK(b.dataset.ke);
+  if(b.dataset.kx){const id=b.dataset.kx;
+    if(kArm==id){const o=K.find(x=>x.id==id);kArm=null;if(o)del("clientes",o.id,"Cadastro em cliente excluído: "+o.nome+" ("+o.cliente+")")}
+    else{kArm=id;setTimeout(()=>{if(kArm==id){kArm=null;renderK()}},4000)}
+    renderK()}
+});
+["kq","kfc","kfs","kfp"].forEach(i=>$(i).addEventListener("input",renderK));
 // ===== SALVAMENTO NO GITHUB (arquivo dados.json no mesmo repositório) =====
 let GHMODE=false,DIRTY=false,BASE=0,CONF=false,busyS=false,armR=false,GH={repo:"",branch:"main",path:"dados.json",token:""};
 const ls=(k,v)=>{try{if(v===undefined)return localStorage.getItem(k);localStorage.setItem(k,v)}catch(e){}return null};
@@ -471,9 +553,9 @@ async function readRemote(){
     return JSON.parse(t)}catch(e){return null}
 }
 function applyRemote(d){
-  D=d.embarques||[];C=d.cadastros||[];LOG=d.log||[];BASE=d.savedAt||0;DIRTY=false;CONF=false;
-  save();saveC();ls(LK,JSON.stringify(LOG));ls("gh-dirty","0");ls("gh-base",String(BASE));
-  render();renderC();renderLog();ghUi();
+  D=d.embarques||[];C=d.cadastros||[];K=d.clientes||[];LOG=d.log||[];BASE=d.savedAt||0;DIRTY=false;CONF=false;
+  save();saveC();saveK();ls(LK,JSON.stringify(LOG));ls("gh-dirty","0");ls("gh-base",String(BASE));
+  render();renderC();renderK();renderLog();ghUi();
 }
 async function ghInit(){
   GHMODE=true;$("mode").hidden=true;["sv","rl","cg"].forEach(i=>$(i).hidden=false);
@@ -493,7 +575,7 @@ async function saveRemote(force){
     if(g.ok){const j=await g.json();sha=j.sha;try{cur=JSON.parse(dec(j.content))}catch(e){}}else if(g.status!==404)throw{code:g.status};
     if(!force&&cur&&(cur.savedAt||0)!==BASE){CONF=true;$("sv").textContent="⚠ Sobrescrever mesmo assim";ghMsg("Outra pessoa salvou em "+stamp(cur.savedAt)+", depois que você abriu. Clique em Atualizar para ver as mudanças dela (descarta as suas) ou em Sobrescrever mesmo assim.",1);return}
     await log("Alterações salvas no GitHub");
-    const t=Date.now(),body=JSON.stringify({embarques:D,cadastros:C,log:LOG,savedAt:t});
+    const t=Date.now(),body=JSON.stringify({embarques:D,cadastros:C,clientes:K,log:LOG,savedAt:t});
     const pr=await fetch(u,{method:"PUT",headers:hd,body:JSON.stringify({message:"Atualização via app"+(ME?" ("+ME+")":""),content:enc(body),branch:GH.branch,...(sha?{sha}:{})})});
     if(!pr.ok)throw{code:pr.status};
     BASE=t;DIRTY=false;ls("gh-base",String(t));ls("gh-dirty","0");ghUi();
@@ -516,7 +598,7 @@ $("gf").addEventListener("submit",e=>{e.preventDefault();
   GH={repo:$("g1").value.trim().replace(/^\/+|\/+$/g,""),branch:$("g2").value.trim()||"main",path:$("g3").value.trim()||"dados.json",token:$("g4").value.trim()};
   ls("gh-cfg",JSON.stringify(GH));$("gv").hidden=true;ghMsg("Configuração guardada. Clique em Salvar alterações.");
 });
-syncRel();render();renderC();init();
+syncRel();render();renderC();renderK();init();
 </script>
 </body>
 </html>
