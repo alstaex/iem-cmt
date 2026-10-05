@@ -96,6 +96,7 @@ fieldset.rel legend{font-weight:600;font-size:13px;color:var(--mut);padding:0 6p
 td input[data-f=obs]{min-width:190px}td input[data-f=req]{min-width:90px}
 .filters.f4{grid-template-columns:2fr 1fr 1fr 1fr}
 @media(max-width:640px){.filters.f4{grid-template-columns:1fr}}
+.obs{max-width:240px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 </style>
 </head>
 <body>
@@ -212,7 +213,7 @@ td input[data-f=obs]{min-width:190px}td input[data-f=req]{min-width:90px}
 <div class="row full" style="margin-top:0"><button class="btn p" type="submit">Salvar cadastro</button><button class="btn" type="button" id="kclr">Limpar formulário</button></div>
 <p id="kmsg" class="full" role="status" style="margin:0;color:var(--red)"></p>
 </form>
-<p style="margin:10px 0 0;color:var(--mut);font-size:13px">Para o mesmo colaborador estar em mais de um cliente ou plataforma, cadastre um registro para cada um. Na tabela, Requisição, Status, Plataforma, Ambiente e Observação podem ser alterados direto na linha, e a data de última atualização muda sozinha.</p>
+<p style="margin:10px 0 0;color:var(--mut);font-size:13px">Para o mesmo colaborador estar em mais de um cliente ou plataforma, cadastre um registro para cada um. Clique no nome do colaborador na tabela para ver os detalhes. A edição só acontece ao clicar em Editar, e a data de última atualização muda sozinha ao salvar.</p>
 </div>
 <div class="panel">
 <h2>Cadastros em clientes</h2>
@@ -226,6 +227,7 @@ td input[data-f=obs]{min-width:190px}td input[data-f=req]{min-width:90px}
 <thead><tr><th>Cliente</th><th>Sonda</th><th>Nome do funcionário</th><th>Função</th><th>Requisição</th><th>Status</th><th>Plataforma</th><th>Ambiente</th><th>Última atualização</th><th>Observação</th><th>Ações</th></tr></thead>
 <tbody id="kb"></tbody></table></div>
 </div>
+<div class="ov" id="kv" hidden><div class="md" role="dialog" aria-modal="true" aria-labelledby="kvt"><div class="mh"><h2 id="kvt"></h2><button class="btn" id="kvc" type="button" aria-label="Fechar">✕</button></div><div id="kvb"></div></div></div>
 </section>
 </main>
 
@@ -493,23 +495,18 @@ document.addEventListener("keydown",e=>{if(e.key==="Escape")$("pv").hidden=true}
 const FUN=["Técnico Eletrônico","Técnico Mecânico"],STK=["Em validação DRAKE","DRAKE","PEOPLELOG","ATIVO","CADASTRAR"],PLT=["DRAKE","PEOPLELOG"],AMB=["Halliburton","Halliburton produtos LTDA","Halliburton produtos 2"];
 const LBLF={req:"Requisição",status:"Status",plat:"Plataforma",amb:"Ambiente",obs:"Observação"};
 const KK="clientes-iem-cmt-v1";
-let K=[],kEdit=null,kArm=null,kDefer=false;
+let K=[],kEdit=null,kArm=null,kv=null;
 const saveK=()=>{try{localStorage.setItem(KK,JSON.stringify(K))}catch(e){}};
 const loadK=()=>{try{K=JSON.parse(localStorage.getItem(KK)||"[]")}catch(e){}};
 $("kc").innerHTML=opt(EMP,"Selecione o cliente");$("kfu").innerHTML=opt(FUN);$("kst").innerHTML=opt(STK);
 $("kp").innerHTML=opt(PLT,"—");$("ka").innerHTML=opt(AMB,"—");
 $("kfc").innerHTML=opt(EMP,"Todos os clientes");$("kfs").innerHTML=opt(STK,"Todos os status");$("kfp").innerHTML=opt(PLT,"Todas as plataformas");
-const ksel=(a,v,f,id,blank)=>`<select class="ie" data-k="${id}" data-f="${f}" aria-label="${LBLF[f]}">${blank?'<option value="">—</option>':""}${a.map(x=>`<option${x===v?" selected":""}>${esc(x)}</option>`).join("")}</select>`;
 function renderK(){
-  const ac=document.activeElement;if(ac&&ac.tagName==="INPUT"&&ac.closest&&ac.closest("#kb")){kDefer=true;return}kDefer=false;
   const q=$("kq").value.trim().toLowerCase(),fc=$("kfc").value,fs=$("kfs").value,fp=$("kfp").value;
   const rows=K.filter(r=>(!q||r.nome.toLowerCase().includes(q)||(r.sonda||"").toLowerCase().includes(q)||String(r.req||"").includes(q))&&(!fc||r.cliente===fc)&&(!fs||r.status===fs)&&(!fp||r.plat===fp)).sort((x,y)=>x.nome.localeCompare(y.nome)||x.cliente.localeCompare(y.cliente));
-  $("kb").innerHTML=rows.length?rows.map(r=>`<tr><td>${esc(r.cliente)}</td><td>${esc(r.sonda)}</td><td><strong>${esc(r.nome)}</strong></td><td>${esc(r.funcao)}</td><td><input class="ie" type="number" min="0" data-k="${r.id}" data-f="req" value="${esc(r.req)}" aria-label="Requisição"></td><td>${ksel(STK,r.status,"status",r.id)}</td><td>${ksel(PLT,r.plat,"plat",r.id,1)}</td><td>${ksel(AMB,r.amb,"amb",r.id,1)}</td><td title="${r.upd?stamp(r.upd):""}">${r.upd?new Date(r.upd).toLocaleDateString("pt-BR"):"—"}</td><td><input class="ie" data-k="${r.id}" data-f="obs" value="${esc(r.obs)}" aria-label="Observação"></td><td style="white-space:nowrap"><button class="btn sm" data-ke="${r.id}">Editar</button> <button class="btn sm d" data-kx="${r.id}">${kArm==r.id?"Confirmar exclusão":"Excluir"}</button></td></tr>`).join(""):empty(11,K.length?"Nenhum registro encontrado com esses filtros.":"Nenhum cadastro em cliente ainda. Preencha o formulário acima.");
+  $("kb").innerHTML=rows.length?rows.map(r=>`<tr><td>${esc(r.cliente)}</td><td>${esc(r.sonda)}</td><td><button class="link" data-kf="${r.id}">${esc(r.nome)}</button></td><td>${esc(r.funcao)}</td><td>${esc(r.req)||"—"}</td><td>${esc(r.status)}</td><td>${esc(r.plat)||"—"}</td><td>${esc(r.amb)||"—"}</td><td title="${r.upd?stamp(r.upd):""}">${r.upd?new Date(r.upd).toLocaleDateString("pt-BR"):"—"}</td><td class="obs" title="${esc(r.obs)}">${esc(r.obs)}</td><td style="white-space:nowrap"><button class="btn sm" data-ke="${r.id}">Editar</button> <button class="btn sm d" data-kx="${r.id}">${kArm==r.id?"Confirmar exclusão":"Excluir"}</button></td></tr>`).join(""):empty(11,K.length?"Nenhum registro encontrado com esses filtros.":"Nenhum cadastro em cliente ainda. Preencha o formulário acima.");
 }
 function clearK(){kEdit=null;$("kf").reset();$("kmsg").textContent="";$("ktitle").textContent="Novo cadastro em cliente"}
-function editK(id){const r=K.find(x=>x.id==id);if(!r)return;kEdit=r.id;
-  $("kc").value=r.cliente;$("ks").value=r.sonda;$("kn").value=r.nome;$("kfu").value=r.funcao;$("kr").value=r.req||"";$("kst").value=r.status;$("kp").value=r.plat||"";$("ka").value=r.amb||"";$("ko").value=r.obs||"";
-  $("ktitle").textContent="Editando: "+r.nome+" ("+r.cliente+")";scrollTo({top:0,behavior:"smooth"});$("kn").focus()}
 $("kclr").onclick=clearK;
 $("kf").addEventListener("submit",e=>{e.preventDefault();
   const nome=$("kn").value.trim().replace(/\s+/g," "),m=$("kmsg");
@@ -521,17 +518,35 @@ $("kf").addEventListener("submit",e=>{e.preventDefault();
   put("clientes",rec,(kEdit?"Cadastro em cliente editado: ":"Cadastro em cliente criado: ")+nome+" ("+r.cliente+")");
   clearK();
 });
-$("kb").addEventListener("change",e=>{const t=e.target,f=t.dataset.f;if(!f)return;
-  const o=K.find(x=>x.id==t.dataset.k);if(!o||(o[f]||"")===t.value)return;
-  put("clientes",{...o,[f]:t.value,upd:Date.now()},o.nome+" ("+o.cliente+"): "+LBLF[f]+" alterado para "+(t.value.slice(0,40)||"vazio"))});
-$("kb").addEventListener("focusout",()=>{if(kDefer)setTimeout(renderK,60)});
 $("kb").addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;
-  if(b.dataset.ke)editK(b.dataset.ke);
+  if(b.dataset.kf)kShow(K.find(x=>x.id==b.dataset.kf));
+  if(b.dataset.ke)kEditPop(K.find(x=>x.id==b.dataset.ke));
   if(b.dataset.kx){const id=b.dataset.kx;
     if(kArm==id){const o=K.find(x=>x.id==id);kArm=null;if(o)del("clientes",o.id,"Cadastro em cliente excluído: "+o.nome+" ("+o.cliente+")")}
     else{kArm=id;setTimeout(()=>{if(kArm==id){kArm=null;renderK()}},4000)}
     renderK()}
 });
+const vv=x=>esc(x)||"—";
+function kShow(r){if(!r)return;kv=r.id;$("kvt").textContent=r.nome;
+  $("kvb").innerHTML=`<div class="ficha"><dl><dt>Cliente</dt><dd>${vv(r.cliente)}</dd><dt>Sonda</dt><dd>${vv(r.sonda)}</dd><dt>Nome do funcionário</dt><dd>${vv(r.nome)}</dd><dt>Função</dt><dd>${vv(r.funcao)}</dd><dt>Requisição</dt><dd>${vv(r.req)}</dd><dt>Status</dt><dd>${vv(r.status)}</dd><dt>Plataforma</dt><dd>${vv(r.plat)}</dd><dt>Qual ambiente</dt><dd>${vv(r.amb)}</dd><dt>Última atualização</dt><dd>${r.upd?stamp(r.upd):"—"}</dd><dt>Observação</dt><dd style="white-space:pre-wrap">${vv(r.obs)}</dd></dl></div><div class="row" style="margin-top:0"><button class="btn p" type="button" data-a="edit">Editar</button><button class="btn" type="button" data-a="close">Fechar</button></div>`;
+  $("kv").hidden=false;$("kvb").querySelector("[data-a=edit]").focus()}
+function kEditPop(r){if(!r)return;kv=r.id;$("kvt").textContent="Editando: "+r.nome;
+  $("kvb").innerHTML=`<form id="kef" class="grid" autocomplete="off"><label>Cliente<select id="e_c" required>${opt(EMP)}</select></label><label>Sonda<input id="e_s" required></label><label>Nome do funcionário<input id="e_n" required></label><label>Função<select id="e_fu" required>${opt(FUN)}</select></label><label>Requisição (número)<input id="e_r" type="number" min="0" inputmode="numeric"></label><label>Status<select id="e_st" required>${opt(STK)}</select></label><label>Plataforma<select id="e_p">${opt(PLT,"—")}</select></label><label>Qual ambiente<select id="e_a">${opt(AMB,"—")}</select></label><label class="full">Observação<textarea id="e_o" rows="2"></textarea></label><p id="e_m" class="full" role="status" style="margin:0;color:var(--red)"></p><div class="row full" style="margin-top:0"><button class="btn p" type="submit">Salvar alterações</button><button class="btn" type="button" data-a="cancel">Cancelar</button></div></form>`;
+  const set=(i,v)=>{$(i).value=v||""};set("e_c",r.cliente);set("e_s",r.sonda);set("e_n",r.nome);set("e_fu",r.funcao);set("e_r",r.req);set("e_st",r.status);set("e_p",r.plat);set("e_a",r.amb);set("e_o",r.obs);
+  $("kv").hidden=false;$("e_n").focus()}
+$("kvb").addEventListener("click",e=>{const a=e.target.closest("button");if(!a||!a.dataset.a)return;const r=K.find(x=>x.id==kv);
+  if(a.dataset.a==="edit")kEditPop(r);else if(a.dataset.a==="cancel")kShow(r);else $("kv").hidden=true});
+$("kvb").addEventListener("submit",e=>{e.preventDefault();const o=K.find(x=>x.id==kv);if(!o)return;
+  const nome=$("e_n").value.trim().replace(/\s+/g," "),m=$("e_m");
+  if(nome.split(" ").length<2){m.textContent="Informe o nome completo (nome e sobrenome).";return}
+  const r={...o,cliente:$("e_c").value,sonda:$("e_s").value.trim(),nome,funcao:$("e_fu").value,req:$("e_r").value.trim(),status:$("e_st").value,plat:$("e_p").value,amb:$("e_a").value,obs:$("e_o").value.trim()};
+  const key=x=>[nm(x.nome),x.cliente,x.plat||"",x.amb||""].join("|");
+  if(K.some(x=>x.id!==o.id&&key(x)===key(r))){m.textContent="Já existe outro registro deste colaborador neste cliente com a mesma plataforma e ambiente.";return}
+  if(["cliente","sonda","nome","funcao","req","status","plat","amb","obs"].every(f=>(o[f]||"")===(r[f]||""))){kShow(o);return}
+  r.upd=Date.now();put("clientes",r,"Cadastro em cliente editado: "+nome+" ("+r.cliente+")");kShow(r)});
+$("kvc").onclick=()=>{$("kv").hidden=true};
+$("kv").addEventListener("click",e=>{if(e.target===$("kv"))$("kv").hidden=true});
+document.addEventListener("keydown",e=>{if(e.key==="Escape")$("kv").hidden=true});
 ["kq","kfc","kfs","kfp"].forEach(i=>$(i).addEventListener("input",renderK));
 // ===== SALVAMENTO NO GITHUB (arquivo dados.json no mesmo repositório) =====
 let GHMODE=false,DIRTY=false,BASE=0,CONF=false,busyS=false,armR=false,GH={repo:"",branch:"main",path:"dados.json",token:""};
